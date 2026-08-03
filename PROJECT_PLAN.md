@@ -198,7 +198,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 
 **Exit gate:** passed on an isolated Surfpool devnet fork with fresh disposable wallets and mint; the public devnet UI is configured for Circle test USDC.
 
-### Phase 3 — autonomous payment loop (8–10 August)
+### Phase 3 — autonomous payment loop (8–10 August) — **complete**
 
 **Outcome:** a deterministic agent buys a real protected result.
 
@@ -208,7 +208,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 - Produce a useful protected artifact rather than “hello world.”
 - Surface transaction lifecycle and errors in the UI.
 
-**Exit gate:** successful 0.10 USDC payment unlocks the resource and updates remaining budget.
+**Exit gate:** passed on an isolated Surfpool devnet fork. A 0.10 USDC payment unlocked the spend-safety brief, reduced remaining authority from 2.00 to 1.90 USDC, and a replay was rejected with HTTP 409.
 
 ### Phase 4 — identity, receipts, and operator UX (11–12 August)
 

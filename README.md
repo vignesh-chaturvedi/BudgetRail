@@ -4,9 +4,9 @@ BudgetRail gives autonomous agents capped, expiring, and instantly revocable tok
 
 ## Build status
 
-**Phases 1 and 2 are complete. Phase 3 has not started.**
+**Phases 1–3 are complete. Phase 4 has not started.**
 
-The repository now contains an owner control plane for creating, inspecting, and revoking native fixed USDC delegations, plus the Phase 1 strict x402 policy and delegated-settlement adapter. Both phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
+The repository now contains an owner control plane for native fixed USDC delegations and a complete autonomous x402 request → challenge → pay → retry → unlock loop. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
 
 Mainnet is intentionally out of scope until the product and safety matrix are complete.
 
@@ -41,6 +41,19 @@ Devnet uses Circle's canonical USDC test token. Mainnet and testnet remain read-
 
 See [`docs/PHASE_2_EVIDENCE.md`](./docs/PHASE_2_EVIDENCE.md) for the reproducible create → inspect → revoke proof.
 
+## Phase 3 autonomous payment loop
+
+The live proof now includes:
+
+- a self-contained HTTP 402 merchant endpoint;
+- a deterministic agent that validates requirements and retries with `PAYMENT-SIGNATURE`;
+- one-time, expiring challenge binding and atomic replay protection;
+- facilitator verification and settlement through the native fixed delegation;
+- a useful protected spend-safety brief;
+- streamed transaction lifecycle, errors, and before/after budget state in the UI.
+
+See [`docs/PHASE_3_EVIDENCE.md`](./docs/PHASE_3_EVIDENCE.md) for the recorded 0.10 USDC settlement and replay rejection.
+
 ## Run locally
 
 Requirements: Node.js 18 or newer and Corepack.
@@ -53,18 +66,21 @@ pnpm test
 pnpm phase1:spike
 pnpm phase1:local
 pnpm phase2:local
+pnpm phase3:local
 pnpm dev
 ```
 
-`phase1:local` and `phase2:local` start and stop isolated Surfpool networks. `phase1:devnet` runs the settlement proof against public devnet when the public faucet is available. All proof signers are disposable and remain in memory only.
+The `phase*:local` commands start and stop isolated Surfpool networks. `phase1:devnet` runs the settlement proof against public devnet when the public faucet is available. All proof signers are disposable and remain in memory only.
 
 ## Important files
 
-- `packages/x402-adapter/` — payment policy, delegated transfer, payload, and facilitator configuration
+- `packages/x402-adapter/` — payment policy, delegated transfer, agent loop, merchant, and facilitator configuration
 - `scripts/phase1-compatibility-spike.ts` — fast offline instruction-shape proof
 - `scripts/phase1-devnet-proof.ts` — full Surfpool/public-devnet settlement proof
 - `scripts/phase2-local-proof.ts` — reproducible allowance create/inspect/revoke proof
+- `scripts/phase3-local-proof.ts` — complete autonomous purchase and replay-rejection proof
 - `app/components/allowances/` — owner allowance control plane
+- `app/components/phase3/` — streamed autonomous payment lab
 - `app/lib/allowances/` — exact amount model, persistence, errors, and native actions
 - `PROJECT_PLAN.html` — interactive project assessment dashboard
 - `PROJECT_PLAN.md` — source-of-truth phased specification
