@@ -1,0 +1,20 @@
+{
+  "name": "BudgetRail Agent",
+  "description": "An autonomous x402 buyer with capped, expiring, and revocable USDC authority on Solana.",
+  "image": "https://raw.githubusercontent.com/vignesh-chaturvedi/BudgetRail/main/public/budgetrail-agent.svg",
+  "services": [
+    {
+      "type": "A2A",
+      "value": "https://budgetrail.vercel.app/api/agent/purchase"
+    },
+    {
+      "type": "WALLET",
+      "value": "solana"
+    }
+  ],
+  "skills": ["finance_and_business/financial_management/budget_management"],
+  "domains": ["finance_and_business/finance"],
+  "x402Support": true,
+  "active": true,
+  "registrations": []
+}

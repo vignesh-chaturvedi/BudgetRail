@@ -210,7 +210,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 
 **Exit gate:** passed on an isolated Surfpool devnet fork. A 0.10 USDC payment unlocked the spend-safety brief, reduced remaining authority from 2.00 to 1.90 USDC, and a replay was rejected with HTTP 409.
 
-### Phase 4 — identity, receipts, and operator UX (11–12 August)
+### Phase 4 — identity, receipts, and operator UX (11–12 August) — **complete**
 
 **Outcome:** the demo tells a coherent, verifiable story.
 
@@ -220,7 +220,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 - Add “revoke now” kill switch and clear transaction feedback.
 - Add reset/demo-seed workflow for repeatable judging.
 
-**Exit gate:** a new viewer can understand owner, agent, merchant, cap, and receipts without narration.
+**Exit gate:** passed on an isolated Surfpool devnet fork. A new viewer can follow the registered identity → linked wallet → 0.10 USDC payment → owner revocation → denied payment story from one responsive console, with receipts and policy decisions visible without narration.
 
 ### Phase 5 — adversarial proof matrix (13–14 August)
 

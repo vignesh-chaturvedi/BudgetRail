@@ -15,7 +15,7 @@ import {
 } from "../../lib/allowances/model";
 import { CreateAllowancePanel } from "./create-allowance-panel";
 import { AllowanceCard } from "./allowance-card";
-import { AutonomousPaymentLab } from "../phase3/autonomous-payment-lab";
+import { OperatorConsole } from "../phase4/operator-console";
 
 export function AllowanceDashboard() {
   const { cluster } = useCluster();
@@ -58,7 +58,7 @@ export function AllowanceDashboard() {
       <section className="max-w-3xl">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
-            Phase 3 autonomous rail
+            Phase 4 verifiable operator rail
           </span>
           <span className="rounded-full border border-border bg-card px-2.5 py-1 font-mono text-xs text-muted">
             {cluster}
@@ -182,7 +182,7 @@ export function AllowanceDashboard() {
         </>
       )}
 
-      <AutonomousPaymentLab />
+      <OperatorConsole />
     </main>
   );
 }

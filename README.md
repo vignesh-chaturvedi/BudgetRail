@@ -4,9 +4,9 @@ BudgetRail gives autonomous agents capped, expiring, and instantly revocable tok
 
 ## Build status
 
-**Phases 1–3 are complete. Phase 4 has not started.**
+**Phases 1–4 are complete. Phase 5 has not started.**
 
-The repository now contains an owner control plane for native fixed USDC delegations and a complete autonomous x402 request → challenge → pay → retry → unlock loop. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
+The repository now contains an owner control plane for native fixed USDC delegations, a complete autonomous x402 request → challenge → pay → retry → unlock loop, and a narration-free operator console backed by a verifiable Agent Registry identity. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
 
 Mainnet is intentionally out of scope until the product and safety matrix are complete.
 
@@ -54,6 +54,19 @@ The live proof now includes:
 
 See [`docs/PHASE_3_EVIDENCE.md`](./docs/PHASE_3_EVIDENCE.md) for the recorded 0.10 USDC settlement and replay rejection.
 
+## Phase 4 identity and operator proof
+
+The judge-facing console now adds:
+
+- an ERC-8004 Solana Agent Registry identity;
+- an on-chain link from that identity to the exact x402 payment wallet;
+- one view of the owner, agent, merchant, fixed budget, and policy trail;
+- Explorer-linked registration, wallet-link, payment, and revocation receipts;
+- a two-step kill switch and explicit post-revocation denial;
+- a reset action that creates a fresh disposable rail for repeatable judging.
+
+See [`docs/PHASE_4_EVIDENCE.md`](./docs/PHASE_4_EVIDENCE.md) for the reproducible identity → pay → revoke → prove workflow.
+
 ## Run locally
 
 Requirements: Node.js 18 or newer and Corepack.
@@ -67,6 +80,7 @@ pnpm phase1:spike
 pnpm phase1:local
 pnpm phase2:local
 pnpm phase3:local
+pnpm phase4:local
 pnpm dev
 ```
 
@@ -79,8 +93,10 @@ The `phase*:local` commands start and stop isolated Surfpool networks. `phase1:d
 - `scripts/phase1-devnet-proof.ts` — full Surfpool/public-devnet settlement proof
 - `scripts/phase2-local-proof.ts` — reproducible allowance create/inspect/revoke proof
 - `scripts/phase3-local-proof.ts` — complete autonomous purchase and replay-rejection proof
+- `scripts/phase4-local-proof.ts` — identity, wallet-link, payment, revoke, and fail-closed proof
+- `packages/agent-registry/` — isolated adapter for the ERC-8004 Solana Agent Registry SDK
 - `app/components/allowances/` — owner allowance control plane
-- `app/components/phase3/` — streamed autonomous payment lab
+- `app/components/phase4/` — judge-facing operator console and receipt timeline
 - `app/lib/allowances/` — exact amount model, persistence, errors, and native actions
 - `PROJECT_PLAN.html` — interactive project assessment dashboard
 - `PROJECT_PLAN.md` — source-of-truth phased specification
