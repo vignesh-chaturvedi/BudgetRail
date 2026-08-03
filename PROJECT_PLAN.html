@@ -1,0 +1,1800 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="BudgetRail phase-wise implementation plan and approval dashboard."
+    />
+    <title>BudgetRail — Build Plan</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d0f;
+        --surface: #111417;
+        --surface-2: #171b1f;
+        --surface-3: #1d2227;
+        --text: #f5f7f8;
+        --muted: #9ba6af;
+        --soft: #cbd2d7;
+        --line: #2a3137;
+        --line-strong: #3a444d;
+        --accent: #66e3a4;
+        --accent-strong: #35c985;
+        --accent-ink: #072116;
+        --blue: #77b5ff;
+        --amber: #f5c875;
+        --red: #ff8b8b;
+        --shadow: 0 20px 55px rgba(0, 0, 0, 0.24);
+        --radius: 14px;
+        --radius-sm: 9px;
+        --max: 1440px;
+      }
+
+      html[data-theme="light"] {
+        color-scheme: light;
+        --bg: #f4f5f3;
+        --surface: #ffffff;
+        --surface-2: #f8f9f7;
+        --surface-3: #eef1ed;
+        --text: #151a17;
+        --muted: #606a64;
+        --soft: #39423d;
+        --line: #dce1dd;
+        --line-strong: #c5ccc7;
+        --accent: #087a4b;
+        --accent-strong: #05683f;
+        --accent-ink: #ffffff;
+        --blue: #1769aa;
+        --amber: #8a5c00;
+        --red: #b33636;
+        --shadow: 0 20px 55px rgba(20, 30, 24, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        font-size: 15px;
+        line-height: 1.55;
+        letter-spacing: -0.01em;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      a {
+        color: inherit;
+      }
+      a:hover {
+        color: var(--accent);
+      }
+      :focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
+        outline-offset: 3px;
+      }
+      .skip-link {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 100;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        transform: translateY(-160%);
+        transition: transform 0.15s ease;
+      }
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      .shell {
+        max-width: var(--max);
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 28px 22px;
+        border-right: 1px solid var(--line);
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .wordmark {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-size: 17px;
+        font-weight: 750;
+        letter-spacing: -0.03em;
+      }
+      .mark {
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: var(--accent);
+        background: var(--surface-2);
+      }
+      .mark svg {
+        width: 18px;
+        height: 18px;
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        width: fit-content;
+        padding: 5px 9px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--amber);
+      }
+      nav {
+        display: grid;
+        gap: 4px;
+      }
+      nav a {
+        color: var(--muted);
+        text-decoration: none;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      nav a:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      nav a.active {
+        background: var(--surface-3);
+        color: var(--text);
+      }
+      .sidebar-foot {
+        margin-top: auto;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .sidebar-foot strong {
+        display: block;
+        color: var(--soft);
+        margin-bottom: 3px;
+      }
+
+      .main {
+        min-width: 0;
+        padding: 28px 36px 80px;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-bottom: 28px;
+      }
+      .icon-button,
+      .button {
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--surface);
+        color: var(--soft);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition:
+          border-color 0.15s ease,
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+      .icon-button {
+        width: 42px;
+        padding: 0;
+      }
+      .button {
+        padding: 0 14px;
+        font-weight: 650;
+      }
+      .icon-button:hover,
+      .button:hover {
+        border-color: var(--line-strong);
+        color: var(--text);
+        background: var(--surface-2);
+      }
+      .icon-button svg,
+      .button svg {
+        width: 17px;
+        height: 17px;
+      }
+
+      section {
+        scroll-margin-top: 24px;
+      }
+      .hero {
+        padding: 36px 0 34px;
+        border-bottom: 1px solid var(--line);
+      }
+      .eyebrow {
+        color: var(--accent);
+        font-size: 12px;
+        line-height: 1;
+        font-weight: 800;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 16px 0 14px;
+        max-width: 880px;
+        font-size: clamp(38px, 6vw, 72px);
+        line-height: 0.98;
+        letter-spacing: -0.065em;
+        font-weight: 780;
+      }
+      .hero-copy {
+        max-width: 760px;
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(17px, 2vw, 21px);
+        line-height: 1.45;
+      }
+      .meta-strip {
+        margin-top: 28px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .meta {
+        padding: 7px 10px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--soft);
+        font-size: 12px;
+      }
+      .meta b {
+        color: var(--text);
+      }
+
+      .section {
+        padding-top: 54px;
+      }
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 22px;
+      }
+      .section-kicker {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      h2 {
+        margin: 0;
+        font-size: clamp(26px, 3vw, 38px);
+        line-height: 1.12;
+        letter-spacing: -0.045em;
+      }
+      .section-note {
+        color: var(--muted);
+        max-width: 500px;
+        text-align: right;
+      }
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: -0.025em;
+      }
+      h4 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+      p {
+        margin: 0;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .small {
+        font-size: 13px;
+      }
+      .mono {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        letter-spacing: -0.02em;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+      .grid-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 20px;
+      }
+      .card-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+      .metric {
+        margin-top: 10px;
+        font-size: 28px;
+        font-weight: 760;
+        letter-spacing: -0.05em;
+        line-height: 1.05;
+      }
+      .card-detail {
+        color: var(--muted);
+        margin-top: 8px;
+        font-size: 13px;
+      }
+      .accent {
+        color: var(--accent);
+      }
+      .blue {
+        color: var(--blue);
+      }
+      .amber {
+        color: var(--amber);
+      }
+      .red {
+        color: var(--red);
+      }
+
+      .proof-loop {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 1px;
+        border: 1px solid var(--line);
+        background: var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .proof-step {
+        position: relative;
+        min-height: 176px;
+        background: var(--surface);
+        padding: 20px;
+      }
+      .step-no {
+        color: var(--accent);
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .proof-step h3 {
+        margin-top: 20px;
+        font-size: 16px;
+      }
+      .proof-step p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .architecture {
+        display: grid;
+        grid-template-columns: 1fr 60px 1fr 60px 1fr;
+        align-items: stretch;
+      }
+      .arch-node {
+        min-height: 190px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .arch-icon {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--surface-3);
+        color: var(--accent);
+      }
+      .arch-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .arch-arrow {
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+      }
+      .arch-arrow svg {
+        width: 25px;
+      }
+      .arch-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 14px;
+      }
+      .tag {
+        padding: 4px 7px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .callout {
+        border-left: 3px solid var(--accent);
+        padding: 18px 20px;
+        background: var(--surface);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      }
+      .callout strong {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .timeline {
+        position: relative;
+        display: grid;
+        gap: 12px;
+      }
+      .phase {
+        display: grid;
+        grid-template-columns: 155px 1fr auto;
+        gap: 22px;
+        align-items: start;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+      .phase-date {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .phase-num {
+        color: var(--accent);
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+      .phase p {
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .phase ul {
+        margin: 12px 0 0;
+        padding-left: 18px;
+        color: var(--soft);
+        font-size: 13px;
+      }
+      .phase li + li {
+        margin-top: 5px;
+      }
+      .gate {
+        min-width: 126px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 11px;
+        text-align: center;
+      }
+      .gate.critical {
+        border-color: color-mix(in srgb, var(--amber) 45%, var(--line));
+        color: var(--amber);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 720px;
+      }
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      th {
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        background: var(--surface-2);
+      }
+      td {
+        color: var(--soft);
+        font-size: 13px;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      .severity {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .severity::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .decision {
+        position: relative;
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 12px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        border-radius: var(--radius);
+        cursor: pointer;
+      }
+      .decision:hover {
+        border-color: var(--line-strong);
+      }
+      .decision:has(input:checked) {
+        border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+        background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+      }
+      .decision input {
+        width: 20px;
+        height: 20px;
+        margin: 2px 0 0;
+        accent-color: var(--accent-strong);
+      }
+      .decision strong {
+        display: block;
+        margin-bottom: 5px;
+      }
+      .decision span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .approval-bar {
+        margin-top: 12px;
+        padding: 14px 16px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+      }
+      .progress {
+        flex: 1;
+        max-width: 420px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--surface-3);
+        overflow: hidden;
+      }
+      .progress > span {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: var(--accent);
+        transition: width 0.2s ease;
+      }
+
+      .source-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .source {
+        padding: 13px 14px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        border-radius: 9px;
+        color: var(--soft);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .source:hover {
+        border-color: var(--line-strong);
+        color: var(--text);
+      }
+      .source svg {
+        width: 15px;
+        flex: 0 0 auto;
+      }
+
+      .footer {
+        margin-top: 64px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      @media (max-width: 1100px) {
+        .shell {
+          grid-template-columns: 210px minmax(0, 1fr);
+        }
+        .sidebar {
+          padding: 24px 16px;
+        }
+        .main {
+          padding-inline: 26px;
+        }
+        .grid-4 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .proof-loop {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .proof-step:last-child {
+          grid-column: span 2;
+        }
+        .architecture {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .arch-arrow {
+          transform: rotate(90deg);
+          min-height: 30px;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .shell {
+          display: block;
+        }
+        .sidebar {
+          position: static;
+          height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+          padding: 16px 18px;
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+        .sidebar nav {
+          display: none;
+        }
+        .sidebar-foot {
+          margin: 0 0 0 auto;
+        }
+        .main {
+          padding: 18px 18px 60px;
+        }
+        .toolbar {
+          margin-bottom: 16px;
+        }
+        .hero {
+          padding-top: 24px;
+        }
+        h1 {
+          font-size: clamp(40px, 14vw, 58px);
+        }
+        .section {
+          padding-top: 44px;
+        }
+        .section-head {
+          display: block;
+        }
+        .section-note {
+          text-align: left;
+          margin-top: 8px;
+        }
+        .grid-4,
+        .grid-3,
+        .grid-2,
+        .decision-grid,
+        .source-list {
+          grid-template-columns: 1fr;
+        }
+        .proof-loop {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+        .proof-step:last-child {
+          grid-column: auto;
+        }
+        .proof-step {
+          min-height: 0;
+        }
+        .phase {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        .gate {
+          text-align: left;
+          width: fit-content;
+        }
+        .approval-bar,
+        .footer {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .progress {
+          width: 100%;
+          max-width: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition: none !important;
+        }
+      }
+
+      @media print {
+        :root {
+          --bg: #fff;
+          --surface: #fff;
+          --surface-2: #f6f6f4;
+          --surface-3: #eee;
+          --text: #111;
+          --muted: #555;
+          --soft: #222;
+          --line: #ddd;
+          --line-strong: #bbb;
+          --accent: #087a4b;
+        }
+        .shell {
+          display: block;
+          max-width: none;
+        }
+        .sidebar,
+        .toolbar,
+        .skip-link {
+          display: none;
+        }
+        .main {
+          padding: 0;
+        }
+        .section {
+          break-inside: avoid;
+        }
+        .phase,
+        .card,
+        .proof-step,
+        .decision {
+          break-inside: avoid;
+          box-shadow: none;
+        }
+        a {
+          text-decoration: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to plan</a>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Plan navigation">
+        <div>
+          <div class="wordmark">
+            <span class="mark" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 5h14M5 12h14M5 19h14" />
+                <circle cx="9" cy="5" r="2" fill="currentColor" stroke="none" />
+                <circle
+                  cx="15"
+                  cy="12"
+                  r="2"
+                  fill="currentColor"
+                  stroke="none"
+                />
+                <circle
+                  cx="11"
+                  cy="19"
+                  r="2"
+                  fill="currentColor"
+                  stroke="none"
+                />
+              </svg>
+            </span>
+            BudgetRail
+          </div>
+          <div class="status-pill" style="margin-top: 14px">
+            <span class="dot"></span>Plan only · review required
+          </div>
+        </div>
+        <nav>
+          <a class="active" href="#overview">Overview</a>
+          <a href="#proof">Proof loop</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#phases">Phases</a>
+          <a href="#tests">Evidence matrix</a>
+          <a href="#risks">Risks</a>
+          <a href="#decisions">Decisions</a>
+          <a href="#costs">Costs</a>
+          <a href="#sources">Sources</a>
+        </nav>
+        <div class="sidebar-foot">
+          <strong>Target ship</strong>
+          17 Aug 2026 · Asia/Kolkata
+        </div>
+      </aside>
+
+      <main id="main" class="main">
+        <div class="toolbar" aria-label="Document controls">
+          <button
+            class="button"
+            id="print-plan"
+            type="button"
+            title="Print or save as PDF"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path
+                d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+              />
+              <path d="M6 14h12v7H6z" />
+            </svg>
+            Save PDF
+          </button>
+          <button
+            class="icon-button"
+            id="theme-toggle"
+            type="button"
+            aria-label="Switch to light theme"
+            title="Toggle theme"
+          >
+            <svg
+              id="theme-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <section class="hero" id="overview">
+          <div class="eyebrow">Build contract · v1.0</div>
+          <h1>Bounded money for autonomous agents.</h1>
+          <p class="hero-copy">
+            BudgetRail gives an agent capped, expiring, and instantly revocable
+            USDC authority for x402 payments—without giving it unrestricted
+            wallet custody.
+          </p>
+          <div class="meta-strip" aria-label="Plan facts">
+            <span class="meta"><b>14 days</b> to ship</span>
+            <span class="meta"><b>200 USDC</b> fixed grant</span>
+            <span class="meta"
+              ><b>Existing audited program</b>, no custom contract</span
+            >
+            <span class="meta"
+              ><b>Primary risk:</b> x402 settlement compatibility</span
+            >
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="snapshot-title">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Project snapshot</div>
+              <h2 id="snapshot-title">What winning looks like</h2>
+            </div>
+            <p class="section-note">
+              A small, credible integration with deterministic proof beats a
+              broad AI-wallet pitch.
+            </p>
+          </div>
+          <div class="grid grid-4">
+            <div class="card">
+              <div class="card-label">Initial cap</div>
+              <div class="metric">2.00 <span class="accent">USDC</span></div>
+              <p class="card-detail">Fixed delegation, 24-hour expiry</p>
+            </div>
+            <div class="card">
+              <div class="card-label">Valid purchase</div>
+              <div class="metric">0.10 <span class="blue">USDC</span></div>
+              <p class="card-detail">Real x402-protected resource</p>
+            </div>
+            <div class="card">
+              <div class="card-label">Over-limit proof</div>
+              <div class="metric">3.00 <span class="amber">USDC</span></div>
+              <p class="card-detail">Rejected by the allowance rail</p>
+            </div>
+            <div class="card">
+              <div class="card-label">Final proof</div>
+              <div class="metric red">Revoked</div>
+              <p class="card-detail">Next valid-size payment fails</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="proof" aria-labelledby="proof-title">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Primary KPI</div>
+              <h2 id="proof-title">The five-beat proof loop</h2>
+            </div>
+            <p class="section-note">
+              Every beat must produce a receipt or a deterministic denial
+              record.
+            </p>
+          </div>
+          <div class="proof-loop">
+            <article class="proof-step">
+              <div class="step-no">01 / GRANT</div>
+              <h3>Owner sets the rail</h3>
+              <p>
+                Grant the registered agent 2 USDC of fixed authority with a
+                24-hour expiry.
+              </p>
+            </article>
+            <article class="proof-step">
+              <div class="step-no">02 / CHALLENGE</div>
+              <h3>Merchant returns 402</h3>
+              <p>
+                The agent requests a useful resource and receives exact payment
+                requirements.
+              </p>
+            </article>
+            <article class="proof-step">
+              <div class="step-no">03 / PAY</div>
+              <h3>Agent spends 0.10</h3>
+              <p>
+                BudgetRail validates every field, signs through the delegation,
+                and unlocks the resource.
+              </p>
+            </article>
+            <article class="proof-step">
+              <div class="step-no">04 / REJECT</div>
+              <h3>3 USDC is denied</h3>
+              <p>
+                The transfer exceeds the remaining authority, so the resource
+                stays locked.
+              </p>
+            </article>
+            <article class="proof-step">
+              <div class="step-no">05 / REVOKE</div>
+              <h3>Kill switch works</h3>
+              <p>
+                The owner revokes the delegation. The agent's next 0.10 USDC
+                attempt fails.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section
+          class="section"
+          id="architecture"
+          aria-labelledby="architecture-title"
+        >
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Technical shape</div>
+              <h2 id="architecture-title">
+                Thin orchestration, hard boundaries
+              </h2>
+            </div>
+            <p class="section-note">
+              Onchain state is the authority. The agent is deterministic at the
+              payment boundary.
+            </p>
+          </div>
+          <div class="architecture">
+            <article class="card arch-node">
+              <div>
+                <div class="arch-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21a8 8 0 0 1 16 0" />
+                  </svg>
+                </div>
+                <h3 style="margin-top: 18px">Human control plane</h3>
+                <p class="muted small" style="margin-top: 7px">
+                  Owner wallet creates, inspects, and instantly revokes
+                  authority.
+                </p>
+              </div>
+              <div class="arch-tags">
+                <span class="tag">Next.js</span
+                ><span class="tag">Wallet adapter</span
+                ><span class="tag">No secrets</span>
+              </div>
+            </article>
+            <div class="arch-arrow" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M14 7l5 5-5 5" />
+              </svg>
+            </div>
+            <article class="card arch-node">
+              <div>
+                <div class="arch-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z" />
+                    <path d="M9 12l2 2 4-4" />
+                  </svg>
+                </div>
+                <h3 style="margin-top: 18px">Native delegation rail</h3>
+                <p class="muted small" style="margin-top: 7px">
+                  Existing Solana program enforces cap, expiry, transfer, and
+                  revocation.
+                </p>
+              </div>
+              <div class="arch-tags">
+                <span class="tag">@solana/kit</span
+                ><span class="tag">@solana/subscriptions</span
+                ><span class="tag">USDC</span>
+              </div>
+            </article>
+            <div class="arch-arrow" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M14 7l5 5-5 5" />
+              </svg>
+            </div>
+            <article class="card arch-node">
+              <div>
+                <div class="arch-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M8 9h8M8 13h5" />
+                    <rect x="3" y="4" width="18" height="16" rx="3" />
+                    <path d="M9 4V2M15 4V2" />
+                  </svg>
+                </div>
+                <h3 style="margin-top: 18px">Agent + x402 merchant</h3>
+                <p class="muted small" style="margin-top: 7px">
+                  Strict policy adapter pays a protected endpoint and records
+                  verifiable evidence.
+                </p>
+              </div>
+              <div class="arch-tags">
+                <span class="tag">x402</span
+                ><span class="tag">8004 registry</span
+                ><span class="tag">Server-side key</span>
+              </div>
+            </article>
+          </div>
+          <div class="callout" style="margin-top: 14px">
+            <strong>Critical architecture decision</strong>
+            Do not build a custom Anchor program for the MVP. First prove that
+            the current x402 verification path accepts a transfer executed
+            through Solana's existing delegation program.
+          </div>
+        </section>
+
+        <section class="section" id="phases" aria-labelledby="phases-title">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Critical path</div>
+              <h2 id="phases-title">Six phases to August 17</h2>
+            </div>
+            <p class="section-note">
+              Recurring allowances are a stretch goal only after the fixed-cap
+              proof is stable.
+            </p>
+          </div>
+          <div class="timeline">
+            <article class="phase">
+              <div>
+                <div class="phase-num">PHASE 0</div>
+                <div class="phase-date">3 AUG</div>
+              </div>
+              <div>
+                <h3>Approve the build contract</h3>
+                <p>
+                  Freeze the proof loop, network, adapter fallback,
+                  public-repository policy, and non-goals.
+                </p>
+                <ul>
+                  <li>Review this plan</li>
+                  <li>Approve four decisions below</li>
+                  <li>Choose the protected demo resource</li>
+                </ul>
+              </div>
+              <div class="gate">Plan approved</div>
+            </article>
+            <article class="phase">
+              <div>
+                <div class="phase-num">PHASE 1</div>
+                <div class="phase-date">4–5 AUG</div>
+              </div>
+              <div>
+                <h3>Bootstrap + compatibility spike</h3>
+                <p>
+                  Install the missing toolchain and prove a delegated x402
+                  payment from challenge through resource unlock.
+                </p>
+                <ul>
+                  <li>Official Solana Next.js scaffold</li>
+                  <li>Minimal merchant, adapter, and transfer</li>
+                  <li>Architecture decision record</li>
+                </ul>
+              </div>
+              <div class="gate critical">Hard risk gate</div>
+            </article>
+            <article class="phase">
+              <div>
+                <div class="phase-num">PHASE 2</div>
+                <div class="phase-date">5–7 AUG</div>
+              </div>
+              <div>
+                <h3>Allowance control plane</h3>
+                <p>
+                  Create, inspect, and revoke fixed USDC authority from a
+                  focused owner dashboard.
+                </p>
+                <ul>
+                  <li>Cap, expiry, spent, remaining</li>
+                  <li>Wallet and RPC failure states</li>
+                  <li>Amount precision tests</li>
+                </ul>
+              </div>
+              <div class="gate">Clean-wallet flow</div>
+            </article>
+            <article class="phase">
+              <div>
+                <div class="phase-num">PHASE 3</div>
+                <div class="phase-date">8–10 AUG</div>
+              </div>
+              <div>
+                <h3>Autonomous payment loop</h3>
+                <p>
+                  Run a useful paid task with strict challenge validation and
+                  replay protection.
+                </p>
+                <ul>
+                  <li>Request → 402 → pay → retry</li>
+                  <li>Useful protected result</li>
+                  <li>Transaction lifecycle UI</li>
+                </ul>
+              </div>
+              <div class="gate">Resource unlocked</div>
+            </article>
+            <article class="phase">
+              <div>
+                <div class="phase-num">PHASE 4</div>
+                <div class="phase-date">11–12 AUG</div>
+              </div>
+              <div>
+                <h3>Identity, receipts, operator UX</h3>
+                <p>
+                  Register the demo agent and make the proof understandable
+                  without narration.
+                </p>
+                <ul>
+                  <li>Agent Registry adapter</li>
+                  <li>Explorer-linked activity</li>
+                  <li>Judge mode + reset path</li>
+                </ul>
+              </div>
+              <div class="gate">Narration-free demo</div>
+            </article>
+            <article class="phase">
+              <div>
+                <div class="phase-num">PHASE 5</div>
+                <div class="phase-date">13–14 AUG</div>
+              </div>
+              <div>
+                <h3>Adversarial proof matrix</h3>
+                <p>
+                  Prove that the rail blocks dangerous and malformed payment
+                  requests.
+                </p>
+                <ul>
+                  <li>Over-limit, expired, revoked</li>
+                  <li>Replay, wrong recipient/mint/network</li>
+                  <li>Secret and dependency scans</li>
+                </ul>
+              </div>
+              <div class="gate critical">9 critical tests</div>
+            </article>
+            <article class="phase">
+              <div>
+                <div class="phase-num">PHASE 6</div>
+                <div class="phase-date">15–17 AUG</div>
+              </div>
+              <div>
+                <h3>Deploy, document, submit</h3>
+                <p>
+                  Publish the project, verify from a clean environment, and
+                  package grant evidence.
+                </p>
+                <ul>
+                  <li>Public app + GitHub repository</li>
+                  <li>60–90 second proof video</li>
+                  <li>Receipts and submission links</li>
+                </ul>
+              </div>
+              <div class="gate">Grant complete</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="tests" aria-labelledby="tests-title">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Evidence</div>
+              <h2 id="tests-title">The guardrail test matrix</h2>
+            </div>
+            <p class="section-note">
+              A payments product wins trust by showing failure behavior as
+              clearly as success.
+            </p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Scenario</th>
+                  <th>Expected result</th>
+                  <th>Evidence</th>
+                  <th>Priority</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Valid 0.10 USDC request</td>
+                  <td>Resource returned; remaining cap decreases</td>
+                  <td>Signature + receipt + UI state</td>
+                  <td><span class="severity accent">Critical</span></td>
+                </tr>
+                <tr>
+                  <td>3 USDC against 2 USDC cap</td>
+                  <td>Rejected; resource remains locked</td>
+                  <td>Program error + unchanged balance</td>
+                  <td><span class="severity accent">Critical</span></td>
+                </tr>
+                <tr>
+                  <td>Payment after revocation</td>
+                  <td>Rejected</td>
+                  <td>Revoke tx + failed attempt</td>
+                  <td><span class="severity accent">Critical</span></td>
+                </tr>
+                <tr>
+                  <td>Payment after expiry</td>
+                  <td>Rejected</td>
+                  <td>Chain state + failed simulation/tx</td>
+                  <td><span class="severity accent">Critical</span></td>
+                </tr>
+                <tr>
+                  <td>Wrong recipient</td>
+                  <td>Blocked before signing</td>
+                  <td>Deterministic policy log</td>
+                  <td><span class="severity amber">High</span></td>
+                </tr>
+                <tr>
+                  <td>Wrong mint or network</td>
+                  <td>Blocked before signing</td>
+                  <td>Deterministic policy log</td>
+                  <td><span class="severity amber">High</span></td>
+                </tr>
+                <tr>
+                  <td>Replayed challenge</td>
+                  <td>No second payment or resource</td>
+                  <td>Replay-store assertion</td>
+                  <td><span class="severity accent">Critical</span></td>
+                </tr>
+                <tr>
+                  <td>Merchant/facilitator offline</td>
+                  <td>No partial success; safe retry</td>
+                  <td>Integration test</td>
+                  <td><span class="severity amber">High</span></td>
+                </tr>
+                <tr>
+                  <td>RPC indexing delay</td>
+                  <td>Pending state then reconciliation</td>
+                  <td>Browser E2E</td>
+                  <td><span class="severity blue">Medium</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" id="risks" aria-labelledby="risks-title">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Risk register</div>
+              <h2 id="risks-title">What could derail the build</h2>
+            </div>
+            <p class="section-note">
+              The schedule is ordered by uncertainty, not visual polish.
+            </p>
+          </div>
+          <div class="grid grid-3">
+            <article class="card">
+              <div class="card-label red">Critical</div>
+              <h3 style="margin-top: 10px">x402 transfer shape</h3>
+              <p class="card-detail">
+                The standard tooling may assume a normal token transfer. Retire
+                this risk in Phase 1 with a self-hosted verifier adapter as the
+                documented fallback.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-label amber">High</div>
+              <h3 style="margin-top: 10px">Scope inflation</h3>
+              <p class="card-detail">
+                No wallet platform, token, swaps, multichain layer, or
+                conversational transaction builder. Preserve the single proof
+                loop.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-label red">Critical</div>
+              <h3 style="margin-top: 10px">Agent key exposure</h3>
+              <p class="card-detail">
+                Server-only disposable key, redacted logs, no client bundle
+                access, and secret scanning before every public release.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-label amber">High</div>
+              <h3 style="margin-top: 10px">Replay/malicious challenge</h3>
+              <p class="card-detail">
+                Validate host, cluster, mint, amount, recipient, nonce, and
+                expiry. Never let the model decide transaction fields.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-label blue">Medium</div>
+              <h3 style="margin-top: 10px">Registry SDK boundary</h3>
+              <p class="card-detail">
+                Keep the 8004 registry's legacy SDK types inside an isolated
+                adapter so the core remains on @solana/kit.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-label blue">Medium</div>
+              <h3 style="margin-top: 10px">Cluster availability</h3>
+              <p class="card-detail">
+                Make mint and cluster configurable, use Surfpool fixtures, and
+                approve mainnet only after safety tests pass.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section
+          class="section"
+          id="decisions"
+          aria-labelledby="decisions-title"
+        >
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Approval gate</div>
+              <h2 id="decisions-title">Four decisions before code</h2>
+            </div>
+            <p class="section-note">
+              Selections are stored only in this browser. They do not start
+              implementation.
+            </p>
+          </div>
+          <div class="decision-grid" id="decision-grid">
+            <label class="decision"
+              ><input type="checkbox" data-decision="mvp" /><span
+                ><strong>Approve the exact MVP loop</strong
+                ><span
+                  >2 USDC grant → 0.10 success → 3 USDC denial → revoke → second
+                  denial.</span
+                ></span
+              ></label
+            >
+            <label class="decision"
+              ><input type="checkbox" data-decision="adapter" /><span
+                ><strong>Approve the x402 adapter fallback</strong
+                ><span
+                  >Use a self-hosted merchant/facilitator verifier if standard
+                  tooling cannot accept the program-mediated transfer.</span
+                ></span
+              ></label
+            >
+            <label class="decision"
+              ><input type="checkbox" data-decision="network" /><span
+                ><strong>Approve devnet/local-first</strong
+                ><span
+                  >Use mainnet for the demo only if the full safety matrix
+                  passes by 14 August.</span
+                ></span
+              ></label
+            >
+            <label class="decision"
+              ><input type="checkbox" data-decision="repo" /><span
+                ><strong>Approve a public repository</strong
+                ><span
+                  >MIT or Apache-2.0 license, with no secrets or funded
+                  production keys.</span
+                ></span
+              ></label
+            >
+          </div>
+          <div class="approval-bar" role="status" aria-live="polite">
+            <strong id="approval-label">0 of 4 decisions approved</strong>
+            <div class="progress" aria-hidden="true">
+              <span id="approval-progress"></span>
+            </div>
+            <span class="muted small" id="approval-state"
+              >Not ready to scaffold</span
+            >
+          </div>
+        </section>
+
+        <section class="section" id="costs" aria-labelledby="costs-title">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Budget</div>
+              <h2 id="costs-title">Keep capital risk low</h2>
+            </div>
+            <p class="section-note">
+              The grant is fixed at 200 USDC; spending more does not make the
+              integration stronger.
+            </p>
+          </div>
+          <div class="grid grid-3">
+            <article class="card">
+              <div class="card-label">Grant</div>
+              <div class="metric">200 <span class="accent">USDC</span></div>
+              <p class="card-detail">
+                Fixed amount, independent of project scope.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-label">Infrastructure ceiling</div>
+              <div class="metric">50 <span class="blue">USDC</span></div>
+              <p class="card-detail">
+                RPC, hosting, and domain during build/demo.
+              </p>
+            </article>
+            <article class="card">
+              <div class="card-label">Mainnet risk ceiling</div>
+              <div class="metric">25 <span class="amber">USDC</span></div>
+              <p class="card-detail">
+                Rent, transactions, and controlled demo float only if approved.
+              </p>
+            </article>
+          </div>
+          <div class="callout" style="margin-top: 14px">
+            <strong>Operating rule</strong>The delegation accounts use a small,
+            recoverable amount of SOL rent. Avoid a custom deployment and keep
+            keys disposable. Engineering evidence—not spend—is the deliverable.
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="done-title">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Ship bar</div>
+              <h2 id="done-title">Definition of done</h2>
+            </div>
+          </div>
+          <div class="grid grid-2">
+            <div class="card">
+              <h3>Product proof</h3>
+              <p class="card-detail">
+                Fixed delegation create/inspect/revoke; real x402 protected
+                resource; registered agent; successful payment; over-budget and
+                post-revoke denials.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Public evidence</h3>
+              <p class="card-detail">
+                Live deployment, public repository, explorer links, passing
+                critical tests, architecture and threat model, setup guide, and
+                60–90 second demo.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="sources" aria-labelledby="sources-title">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Primary research</div>
+              <h2 id="sources-title">Official technical sources</h2>
+            </div>
+            <p class="section-note">
+              Verified 3 August 2026. The implementation should re-check package
+              versions at install time.
+            </p>
+          </div>
+          <div class="source-list">
+            <a
+              class="source"
+              href="https://solana.com/docs/payments/subscriptions/overview"
+              target="_blank"
+              rel="noreferrer"
+              ><span>Subscriptions & Allowances overview</span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"
+                /></svg
+            ></a>
+            <a
+              class="source"
+              href="https://solana.com/docs/payments/subscriptions/fixed-delegation"
+              target="_blank"
+              rel="noreferrer"
+              ><span>Fixed delegation guide</span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"
+                /></svg
+            ></a>
+            <a
+              class="source"
+              href="https://github.com/solana-foundation/subscriptions"
+              target="_blank"
+              rel="noreferrer"
+              ><span>Delegation program repository</span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"
+                /></svg
+            ></a>
+            <a
+              class="source"
+              href="https://solana.com/uk/developers/guides/getstarted/intro-to-x402"
+              target="_blank"
+              rel="noreferrer"
+              ><span>Solana x402 guide</span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"
+                /></svg
+            ></a>
+            <a
+              class="source"
+              href="https://solana.com/developers/templates/kit-node-solanax402"
+              target="_blank"
+              rel="noreferrer"
+              ><span>Official x402 template</span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"
+                /></svg
+            ></a>
+            <a
+              class="source"
+              href="https://solana.com/pl/agent-registry"
+              target="_blank"
+              rel="noreferrer"
+              ><span>Solana Agent Registry</span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"
+                /></svg
+            ></a>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <span
+            >BudgetRail planning package · no code or dependencies
+            installed</span
+          ><span>Source of truth: PROJECT_PLAN.md</span>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (() => {
+        const root = document.documentElement;
+        const themeButton = document.getElementById("theme-toggle");
+        const savedTheme = localStorage.getItem("budgetrail-plan-theme");
+        if (savedTheme === "light" || savedTheme === "dark")
+          root.dataset.theme = savedTheme;
+
+        function updateThemeLabel() {
+          const next = root.dataset.theme === "dark" ? "light" : "dark";
+          themeButton.setAttribute("aria-label", `Switch to ${next} theme`);
+        }
+        updateThemeLabel();
+        themeButton.addEventListener("click", () => {
+          root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+          localStorage.setItem("budgetrail-plan-theme", root.dataset.theme);
+          updateThemeLabel();
+        });
+        document
+          .getElementById("print-plan")
+          .addEventListener("click", () => window.print());
+
+        const decisions = [...document.querySelectorAll("[data-decision]")];
+        const label = document.getElementById("approval-label");
+        const state = document.getElementById("approval-state");
+        const progress = document.getElementById("approval-progress");
+        const key = "budgetrail-plan-decisions";
+        let saved = {};
+        try {
+          saved = JSON.parse(localStorage.getItem(key) || "{}");
+        } catch (_) {
+          saved = {};
+        }
+        decisions.forEach((input) => {
+          input.checked = Boolean(saved[input.dataset.decision]);
+        });
+
+        function updateApprovals() {
+          const values = {};
+          decisions.forEach((input) => {
+            values[input.dataset.decision] = input.checked;
+          });
+          localStorage.setItem(key, JSON.stringify(values));
+          const count = decisions.filter((input) => input.checked).length;
+          label.textContent = `${count} of ${decisions.length} decisions approved`;
+          progress.style.width = `${(count / decisions.length) * 100}%`;
+          state.textContent =
+            count === decisions.length
+              ? "Ready for implementation approval"
+              : "Not ready to scaffold";
+          state.className =
+            count === decisions.length ? "small accent" : "muted small";
+        }
+        decisions.forEach((input) =>
+          input.addEventListener("change", updateApprovals)
+        );
+        updateApprovals();
+
+        const navLinks = [...document.querySelectorAll("nav a")];
+        const sections = navLinks
+          .map((a) => document.querySelector(a.getAttribute("href")))
+          .filter(Boolean);
+        if ("IntersectionObserver" in window) {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              const visible = entries
+                .filter((entry) => entry.isIntersecting)
+                .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+              if (!visible) return;
+              navLinks.forEach((a) =>
+                a.classList.toggle(
+                  "active",
+                  a.getAttribute("href") === `#${visible.target.id}`
+                )
+              );
+            },
+            { rootMargin: "-15% 0px -70% 0px", threshold: [0, 0.2, 0.5] }
+          );
+          sections.forEach((section) => observer.observe(section));
+        }
+      })();
+    </script>
+  </body>
+</html>
