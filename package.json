@@ -12,6 +12,7 @@
     "phase1:spike": "tsx scripts/phase1-compatibility-spike.ts",
     "phase1:devnet": "tsx scripts/phase1-devnet-proof.ts",
     "phase1:local": "tsx scripts/phase1-devnet-proof.ts --local",
+    "phase2:local": "tsx scripts/phase2-local-proof.ts",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",

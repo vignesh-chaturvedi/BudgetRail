@@ -1,46 +1,30 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
 import { ClusterSelect } from "./cluster-select";
 import { WalletButton } from "./wallet-button";
 
-const NAV = [
-  { href: "/", label: "Subscribe" },
-  { href: "/subscriptions", label: "My Subscriptions" },
-];
-
 export function AppHeader() {
-  const pathname = usePathname();
-
   return (
-    <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
-      <div className="flex items-center gap-6">
-        <Link href="/" className="text-sm font-semibold tracking-tight">
-          Solana Subscriptions
-        </Link>
-        <nav className="flex items-center gap-1">
-          {NAV.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition hover:bg-cream ${
-                  active ? "bg-cream text-foreground" : "text-muted"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+    <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
+        <Link
+          href="/"
+          className="flex min-h-10 items-center gap-2 rounded-lg focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary font-mono text-xs font-bold text-primary-foreground">
+            BR
+          </span>
+          <span>
+            <span className="block text-sm font-semibold tracking-tight">
+              BudgetRail
+            </span>
+            <span className="hidden text-[0.6875rem] uppercase tracking-widest text-muted sm:block">
+              Agent spending control
+            </span>
+          </span>
+        </Link>
+      </div>
+      <div className="flex items-center gap-2 sm:gap-3">
         <ThemeToggle />
         <ClusterSelect />
         <WalletButton />

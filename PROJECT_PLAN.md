@@ -185,7 +185,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 
 **Exit gate:** compatibility spike passes; no custom onchain program is required.
 
-### Phase 2 — allowance control plane (5–7 August)
+### Phase 2 — allowance control plane (5–7 August) — **complete**
 
 **Outcome:** the owner can create, inspect, and revoke a fixed USDC delegation.
 
@@ -196,7 +196,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 - Handle missing funds, wrong cluster, rejected signature, RPC delay, and already-revoked states.
 - Add unit and integration coverage for amount precision and state parsing.
 
-**Exit gate:** create → inspect → revoke works from a clean wallet and fresh environment.
+**Exit gate:** passed on an isolated Surfpool devnet fork with fresh disposable wallets and mint; the public devnet UI is configured for Circle test USDC.
 
 ### Phase 3 — autonomous payment loop (8–10 August)
 

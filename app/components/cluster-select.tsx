@@ -15,58 +15,49 @@ export function ClusterSelect() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, []);
 
   return (
     <div className="relative" ref={ref}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex cursor-pointer items-center gap-2 rounded-lg border border-border-low bg-card px-3 py-2 text-xs font-medium transition hover:bg-cream"
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        className="flex min-h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-medium transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
       >
-        <span
-          className="h-2 w-2 rounded-full"
-          style={{
-            backgroundColor:
-              cluster === "mainnet"
-                ? "#22c55e"
-                : cluster === "devnet"
-                  ? "#3b82f6"
-                  : cluster === "testnet"
-                    ? "#eab308"
-                    : "#a3a3a3",
-          }}
-        />
+        <span className={`size-2 rounded-full ${clusterDotClass(cluster)}`} />
         {cluster}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-40 rounded-xl border border-border-low bg-card p-2 shadow-lg">
+        <div
+          className="absolute right-0 top-full z-50 mt-2 w-40 rounded-xl border border-border bg-popover p-2 shadow-lg"
+          role="menu"
+        >
           <div className="space-y-1">
             {CLUSTERS.map((c) => (
               <button
                 key={c}
+                type="button"
+                role="menuitem"
                 onClick={() => {
                   setCluster(c);
                   setIsOpen(false);
                 }}
-                className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium transition hover:bg-cream ${
-                  c === cluster ? "bg-cream" : ""
+                className={`flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-medium transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${
+                  c === cluster ? "bg-secondary" : ""
                 }`}
               >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{
-                    backgroundColor:
-                      c === "mainnet"
-                        ? "#22c55e"
-                        : c === "devnet"
-                          ? "#3b82f6"
-                          : c === "testnet"
-                            ? "#eab308"
-                            : "#a3a3a3",
-                  }}
-                />
+                <span className={`size-2 rounded-full ${clusterDotClass(c)}`} />
                 {c}
               </button>
             ))}
@@ -75,4 +66,11 @@ export function ClusterSelect() {
       )}
     </div>
   );
+}
+
+function clusterDotClass(cluster: (typeof CLUSTERS)[number]) {
+  if (cluster === "devnet") return "bg-warning";
+  if (cluster === "localnet") return "bg-info";
+  if (cluster === "mainnet") return "bg-foreground";
+  return "bg-muted";
 }

@@ -1,6 +1,6 @@
 # Build Context
 
-> Phase 1 handoff updated 2026-08-03. Stop here for the repository push before Phase 2.
+> Phase 2 handoff updated 2026-08-03. Stop here for the repository push before Phase 3.
 
 ## Product
 
@@ -11,16 +11,16 @@
 
 ## Actual stack
 
-| Layer               | Choice                                                      | Phase 1 status                              |
-| ------------------- | ----------------------------------------------------------- | ------------------------------------------- |
-| Web                 | Next.js 16 + React 19 + TypeScript + Tailwind CSS 4         | scaffolded from official template           |
-| Solana client       | `@solana/kit` 6.9                                           | installed and typechecked                   |
-| Allowance primitive | native Subscriptions Program + `@solana/subscriptions` 0.3  | fixed delegation proven                     |
-| Payments            | x402 v2.20 `exact` + BudgetRail delegated payload adapter   | facilitator verify/settle proven            |
-| Token               | configurable SPL mint; disposable six-decimal mint in proof | proven locally                              |
-| Testing             | Vitest + Surfpool 1.4                                       | 11 tests passing; full proof script passing |
-| Package manager     | pnpm 11.20 via Corepack                                     | locked                                      |
-| License             | MIT                                                         | added                                       |
+| Layer               | Choice                                                     | Current status                                      |
+| ------------------- | ---------------------------------------------------------- | --------------------------------------------------- |
+| Web                 | Next.js 16 + React 19 + TypeScript + Tailwind CSS 4        | responsive owner control plane complete             |
+| Solana client       | `@solana/kit` 6.9                                          | wallet, RPC queries, and native actions integrated  |
+| Allowance primitive | native Subscriptions Program + `@solana/subscriptions` 0.3 | create, inspect, and idempotent revoke proven       |
+| Payments            | x402 v2.20 `exact` + BudgetRail delegated payload adapter  | facilitator verify/settle proven                    |
+| Token               | Circle test USDC on devnet; disposable mint in proofs      | exact six-decimal model and balance checks complete |
+| Testing             | Vitest + Surfpool 1.4                                      | 26 deterministic tests + integration proofs         |
+| Package manager     | pnpm 11.20 via Corepack                                    | locked                                              |
+| License             | MIT                                                        | added                                               |
 
 The global Solana CLI was not installed because the Phase 1 native integration needs no custom program build or deployment. Surfpool is project-local and reproducible through the lockfile.
 
@@ -46,6 +46,16 @@ Use the audited native delegation program. No custom Anchor program is required:
 - Over-budget policy rejection: `AMOUNT_EXCEEDS_REQUEST_LIMIT`
 - Public devnet rerun prepared; Solana public faucet returned HTTP 429 on 2026-08-03
 
+## Phase 2 result
+
+- Owner dashboard creates, inspects, and revokes native fixed delegations
+- Exact bigint USDC parsing prevents floating-point precision loss
+- On-chain remaining amount is authoritative; local metadata only preserves the original cap
+- Transaction review, two-step revoke, Explorer links, balance readiness, and actionable failures
+- Mainnet and testnet writes disabled until the finished-project safety review
+- Standalone Surfpool proof records create/revoke signatures and idempotent repeat-revoke behavior
+- Responsive review passed at 375 px, 768 px, and 1280 px with no browser console warnings/errors
+
 ## Progress
 
 - [x] Idea validated
@@ -55,7 +65,7 @@ Use the audited native delegation program. No custom Anchor program is required:
 - [x] Official repository scaffolded
 - [x] x402/delegation compatibility spike passed
 - [x] Phase 1 evidence recorded
-- [ ] Phase 2 allowance control plane
+- [x] Phase 2 allowance control plane
 - [ ] Phase 3 autonomous payment loop
 - [ ] Phase 4 identity, receipts, and operator UX
 - [ ] Phase 5 adversarial hardening
@@ -63,4 +73,4 @@ Use the audited native delegation program. No custom Anchor program is required:
 
 ## Next action
 
-Push this Phase 1 checkpoint to GitHub. Start Phase 2 only after the user confirms the push is complete.
+Review and push this Phase 2 checkpoint to GitHub. Start Phase 3 only after the user confirms the push is complete.
