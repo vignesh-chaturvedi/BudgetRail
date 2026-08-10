@@ -1,6 +1,6 @@
 # BudgetRail architecture
 
-Updated 2026-08-10 for the Phase 6 grant-demo release candidate.
+Updated 2026-08-10 for the Phase 6 grant-demo release candidate and isolated Phase 7 mainnet canary.
 
 ## System shape
 
@@ -44,8 +44,10 @@ The public grant demo must run as exactly one long-lived Linux x64 container. Se
 
 ## Release boundaries
 
-- Mainnet creation, payment, revocation, and demo writes remain disabled in code.
+- Mainnet creation, payment, revocation, and demo writes remain disabled in the hosted application.
 - `BUDGETRAIL_ENABLE_MAINNET_WRITES=true` is a tripwire that blocks readiness; it does not enable writes.
+- A separate local CLI may execute only the fixed Phase 7 canary after a clean-commit check, private-RPC verification, exact-balance preflight, `--execute`, and the exact acknowledgement phrase.
+- The canary is capped at 0.20 USDC and 0.05 combined SOL, uses disposable external keypairs, and closes delegated authority before funds are swept.
 - No private key, seed phrase, funded mainnet signer, or authenticated RPC URL belongs in source or any `NEXT_PUBLIC_*` variable.
 - Public actions have per-client quotas; the hosting proxy must overwrite client-IP headers.
 - Hosted registry writes use the live same-origin agent card; local proofs use the stable repository metadata fallback.
@@ -58,7 +60,9 @@ The public grant demo must run as exactly one long-lived Linux x64 container. Se
 | `packages/x402-adapter`          | exact requirement validation, delegated transfer, facilitator, merchant, and agent loop |
 | `packages/agent-registry`        | ERC-8004 registration and operational-wallet verification                               |
 | `packages/security`              | bounded error and diagnostic redaction                                                  |
+| `packages/mainnet-canary`        | fixed mainnet policy, external evidence schema, and report rendering                    |
 | `app/lib/phase3/demo-runtime.ts` | isolated disposable proof rail and activity state                                       |
 | `app/lib/release/config.ts`      | fail-closed hosted-demo and mainnet release policy                                      |
 | `app/lib/security/rate-limit.ts` | bounded public endpoint quotas                                                          |
 | `scripts/phase*-*.ts`            | reproducible phase proofs and release gate                                              |
+| `scripts/mainnet-canary.ts`      | isolated mainnet inspect, canary, verification, and recovery workflow                   |

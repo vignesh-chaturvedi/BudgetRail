@@ -4,13 +4,13 @@ BudgetRail gives autonomous agents capped, expiring, and instantly revocable tok
 
 ## Build status
 
-**Phases 1–5 are complete. The Phase 6 release candidate is ready for public deployment.**
+**Phases 1–6 are complete. Phase 7 adds a fixed-value mainnet canary without enabling mainnet writes in the hosted app.**
 
 The repository now contains an owner control plane for native fixed USDC delegations, a complete autonomous x402 request → challenge → pay → retry → unlock loop, a verifiable Agent Registry identity, and an adversarial judge console that proves success, over-budget denial, expiry, and revocation. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
 
-The final codebase now includes a portable long-running Node container, fail-closed release readiness, public endpoint quotas, dynamic agent metadata, and a complete deployment/demo/submission kit. Public hosting, clean-browser acceptance, the video, and final live evidence links are completed after this commit is pushed.
+The codebase includes a portable long-running Node container, fail-closed release readiness, public endpoint quotas, dynamic agent metadata, a deployment/demo/submission kit, and a separate local mainnet-canary harness. Public hosting, clean-browser acceptance, the video, and final live evidence links are completed after the release commit is pushed.
 
-Mainnet writes remain intentionally locked. This release is approved only as a disposable Solana devnet grant demo.
+Mainnet writes remain intentionally locked in the hosted application. The only mainnet write path is the local Phase 7 CLI: it pins canonical USDC and the native Subscriptions Program, enforces an exact 0.20 USDC exposure, requires a private RPC and explicit acknowledgement, records finalized evidence, revokes authority, and sweeps material funds.
 
 ## Phase 1 proof
 
@@ -95,6 +95,19 @@ The deployment package adds:
 
 Start with [`docs/PHASE_6_EVIDENCE.md`](./docs/PHASE_6_EVIDENCE.md), [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md), and [`docs/SUBMISSION_CHECKLIST.md`](./docs/SUBMISSION_CHECKLIST.md).
 
+## Phase 7 mainnet canary
+
+The isolated canary harness adds:
+
+- disposable mainnet-only owner, agent, facilitator, and merchant signers stored outside Git;
+- pinned cluster, program, mint, allowance, payment, rejection, expiry, and SOL-exposure checks;
+- exact 0.10 USDC x402 settlement from a 0.20 USDC native fixed delegation;
+- policy and native-simulation rejection of a 0.30 USDC attempt with unchanged balances;
+- finalized revocation, post-revoke denial, authority closure, and token-delegate verification;
+- an independently replayable signature check, recovery sweep, and sanitized evidence report.
+
+The hosted demo remains devnet-only. Follow [`docs/PHASE_7_MAINNET_CANARY.md`](./docs/PHASE_7_MAINNET_CANARY.md); do not fund a canary wallet or execute writes until its preflight passes.
+
 ## Run locally
 
 Requirements: Node.js 22.13 or newer and Corepack (required by pinned pnpm 11.20).
@@ -111,6 +124,7 @@ pnpm phase3:local
 pnpm phase4:local
 pnpm phase5:local
 pnpm phase6:release
+pnpm phase7:canary inspect
 pnpm security:secrets
 pnpm security:audit
 pnpm dev
@@ -128,9 +142,11 @@ The `phase*:local` commands start and stop isolated Surfpool networks. `phase1:d
 - `scripts/phase4-local-proof.ts` — identity, wallet-link, payment, revoke, and fail-closed proof
 - `scripts/phase5-adversarial-proof.ts` — valid, over-budget, expired, and revoked invariant proof
 - `scripts/phase6-release-check.ts` — deployment profile, artifact, repository, and mainnet-lock gate
+- `scripts/mainnet-canary.ts` — fixed-scope mainnet inspection, canary, verification, evidence, and sweep CLI
 - `scripts/security-scan.ts` — current-source, Git-history, and client-bundle credential scan
 - `packages/agent-registry/` — isolated adapter for the ERC-8004 Solana Agent Registry SDK
 - `packages/security/` — bounded redaction for public diagnostics and activity records
+- `packages/mainnet-canary/` — mainnet constants, configuration guards, evidence schema, report rendering, and tests
 - `app/components/allowances/` — owner allowance control plane
 - `app/components/phase4/` — judge-facing operator console and receipt timeline
 - `app/lib/release/` — hosted-demo readiness and mainnet tripwire
@@ -143,7 +159,7 @@ The `phase*:local` commands start and stop isolated Surfpool networks. `phase1:d
 
 The LLM never chooses or mutates transaction-critical fields. Network, token mint, recipient, facilitator fee payer, amount, timeout, and resource origin must all match deterministic policy before the agent signs anything.
 
-The public grant demo must run as one long-lived container because its disposable signers and replay store are process-local. It is not a horizontally scaled custody service.
+The public grant demo must run as one long-lived container because its disposable signers and replay store are process-local. It is not a horizontally scaled custody service. The local Phase 7 canary is evidence of the bounded mainnet primitive, not authorization for unattended production spending.
 
 ## License
 

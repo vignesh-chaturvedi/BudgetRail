@@ -75,4 +75,6 @@ curl --fail http://127.0.0.1:3000/.well-known/agent.json
 
 ## Mainnet is a separate project gate
 
-BudgetRail has no custom program to deploy, but a real mainnet service would still need a paid primary and independent fallback RPC, durable replay state, distributed quotas, monitored wallet balances, external signer custody, a funded-wallet threat review, transaction simulation, and explicit owner approval. None of those are inferred from this grant-demo deployment.
+BudgetRail has no custom program to deploy. The hosted grant demo remains devnet-only, but a separately gated, fixed-value mainnet proof is defined in [`PHASE_7_MAINNET_CANARY.md`](./PHASE_7_MAINNET_CANARY.md). That canary does not make the hosted service production-ready.
+
+A real mainnet service would still need a paid primary and independent fallback RPC, durable replay state, distributed quotas, monitored wallet balances, external signer custody, a funded-wallet threat review, transaction simulation, and explicit owner approval. None of those are inferred from either the grant-demo deployment or the tiny canary.
