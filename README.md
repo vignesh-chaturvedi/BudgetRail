@@ -4,13 +4,13 @@ BudgetRail gives autonomous agents capped, expiring, and instantly revocable tok
 
 ## Build status
 
-**Phases 1–6 are complete. Phase 7 adds a fixed-value mainnet canary without enabling mainnet writes in the hosted app.**
+**Phases 1–7 are complete. The fixed-value mainnet canary passed and was fully swept without enabling mainnet writes in the hosted app.**
 
 The repository now contains an owner control plane for native fixed USDC delegations, a complete autonomous x402 request → challenge → pay → retry → unlock loop, a verifiable Agent Registry identity, and an adversarial judge console that proves success, over-budget denial, expiry, and revocation. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
 
 The codebase includes a portable long-running Node container, fail-closed release readiness, public endpoint quotas, dynamic agent metadata, a deployment/demo/submission kit, and a separate local mainnet-canary harness. Public hosting, clean-browser acceptance, the video, and final live evidence links are completed after the release commit is pushed.
 
-Mainnet writes remain intentionally locked in the hosted application. The only mainnet write path is the local Phase 7 CLI: it pins canonical USDC and the native Subscriptions Program, enforces an exact 0.20 USDC exposure, requires a private RPC and explicit acknowledgement, records finalized evidence, revokes authority, and sweeps material funds.
+Mainnet writes remain intentionally locked in the hosted application. The only mainnet write path is the local Phase 7 CLI: it pins canonical USDC and the native Subscriptions Program, enforces an exact 0.20 USDC exposure, requires a private RPC and explicit acknowledgement, records finalized evidence, revokes authority, and sweeps every disposable balance.
 
 ## Phase 1 proof
 
@@ -106,7 +106,9 @@ The isolated canary harness adds:
 - finalized revocation, post-revoke denial, authority closure, and token-delegate verification;
 - an independently replayable signature check, rent-recovering cleanup sweep, and sanitized evidence report.
 
-The hosted demo remains devnet-only. Follow [`docs/PHASE_7_MAINNET_CANARY.md`](./docs/PHASE_7_MAINNET_CANARY.md); do not fund a canary wallet or execute writes until its preflight passes.
+Run `BR-MN-20260810-001` passed on mainnet: the 0.10 USDC payment finalized, both negative tests left balances unchanged, all authority was removed, and the full 0.20 USDC plus remaining SOL and token-account rent returned to the confirmed recovery wallet. Mainnet also exposed a trailing-account mismatch in the installed Subscriptions SDK; the journal failed closed, the guarded containment path finalized revocation, and the fix is now covered by the canary workflow.
+
+The hosted demo remains devnet-only. Review [`docs/PHASE_7_MAINNET_EVIDENCE.md`](./docs/PHASE_7_MAINNET_EVIDENCE.md), the [standalone HTML report](./docs/PHASE_7_MAINNET_REPORT.html), and the reusable [`docs/PHASE_7_MAINNET_CANARY.md`](./docs/PHASE_7_MAINNET_CANARY.md) runbook.
 
 ## Run locally
 

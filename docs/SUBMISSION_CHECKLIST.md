@@ -19,6 +19,16 @@ Fill the link placeholders only after deploying the pushed Phase 6 commit.
 - [ ] Owner revocation: `PENDING_PUBLIC_DEVNET_SIGNATURE`
 - [ ] Over-budget and post-revoke rejection evidence: link the live activity view/video; denied transactions intentionally have no settlement signature.
 
+## Mainnet canary evidence
+
+- [x] Reviewed report: [`PHASE_7_MAINNET_EVIDENCE.md`](./PHASE_7_MAINNET_EVIDENCE.md)
+- [x] Judge-friendly HTML: [`PHASE_7_MAINNET_REPORT.html`](./PHASE_7_MAINNET_REPORT.html)
+- [x] Successful 0.10 USDC payment: [`2rLj5Laj…Uyar8Qis`](https://explorer.solana.com/tx/2rLj5LajHdsZzG7tdtmMrWE2vLDzbt9npGBMGJ2DdEktkUsNxRsc1Hm9dAZ3VjoQmFRZJmyPRshs1W2oUyar8Qis?cluster=mainnet-beta)
+- [x] Finalized revocation: [`5qe2EWva…Cj8HTTks`](https://explorer.solana.com/tx/5qe2EWvaaEb5991DC3oScw2RpHu6dWe3AeMRPXVY4Kocf7g8nFTj2azrRFYVuPvJrFi8NrMfBEhFHQJwCj8HTTks?cluster=mainnet-beta)
+- [x] SPL token delegate cleared: [`4Hr426NC…URbZK7xc`](https://explorer.solana.com/tx/4Hr426NCiABxM3nbFP4qRwJsT6MnA6Mi8ME9Se8KxdYjouBLJS9tpbkV3926jAzVgXw8ToMWTyj45NxNURbZK7xc?cluster=mainnet-beta)
+- [x] Terminal cleanup verified through slot `438357104`; every disposable SOL/USDC balance is zero.
+- [x] Over-budget and post-revoke attempts were rejected before broadcast and left finalized balances unchanged.
+
 ## Clean-browser acceptance
 
 - [ ] `/api/health` returns `200`
@@ -32,4 +42,4 @@ Fill the link placeholders only after deploying the pushed Phase 6 commit.
 
 ## Suggested final update
 
-> BudgetRail is live: a verified Solana agent receives a native fixed USDC delegation, completes a real x402-protected payment, rejects a request above its cap, and loses all remaining authority when the owner revokes it. The public demo, repository, adversarial proof matrix, transaction receipts, threat model, and 75-second walkthrough are linked below. Mainnet writes remain deliberately locked; the grant deliverable runs with disposable devnet proof state.
+> BudgetRail is complete: a verified Solana agent receives a native fixed USDC delegation, completes an x402-protected payment, rejects a request above its cap, and loses all remaining authority when the owner revokes it. The fixed Phase 7 canary repeated the critical loop with 0.20 real mainnet USDC: exactly 0.10 settled, unsafe attempts changed no balances, revocation finalized, and all temporary funds and accounts were recovered. The hosted demo remains deliberately devnet-only and mainnet writes stay locked.

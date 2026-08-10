@@ -24,11 +24,11 @@ The full genesis hash identifies the RPC cluster. The shorter value in the CAIP-
 - Four new disposable keypairs are generated for owner, agent, facilitator, and merchant. Devnet or personal wallets are never used as canary signers.
 - Keypairs and authenticated RPC URLs stay outside the repository with owner-only filesystem permissions.
 - The public Solana RPC is accepted only by the read-only `inspect` action. Preflight and write actions require a private mainnet provider.
-- `run` and `sweep` require both `--execute` and the exact acknowledgement `BUDGETRAIL_MAINNET_CANARY_0.20_USDC`.
+- `run`, `contain`, `finalize`, and `sweep` require both `--execute` and the exact acknowledgement `BUDGETRAIL_MAINNET_CANARY_0.20_USDC`.
 - Preflight requires a clean committed Git tree, the exact owner USDC balance, bounded SOL, fresh accounts, the pinned program, and canonical mint.
 - Every submitted transaction must reach `finalized`; signatures and finalized slots are written immediately to external evidence.
 - The canary revokes the delegation, proves a formerly valid payment now fails, closes the Subscription Authority, and verifies that the token delegate is cleared.
-- If the run aborts after delegation creation, the CLI attempts an emergency revoke before returning the error.
+- If the run aborts after delegation creation, the CLI attempts an emergency revoke before returning the error; durable evidence then supports guarded, resumable `contain` and `finalize` actions.
 - The recovery sweep is a distinct, explicitly approved action that also closes the disposable USDC accounts and returns their rent.
 
 ## External storage
@@ -89,6 +89,16 @@ pnpm phase7:canary run --execute
 pnpm phase7:canary verify
 ```
 
+If the journal records an active delegation after a failed revoke, do not replay
+`run`. Inspect the recorded signatures, then use the same protected signers and
+explicit guard to resume cleanup:
+
+```bash
+pnpm phase7:canary contain --execute
+pnpm phase7:canary finalize --execute
+pnpm phase7:canary verify
+```
+
 After independently confirming the intended recovery address:
 
 ```bash
@@ -105,8 +115,9 @@ pnpm phase7:canary report
 4. No transaction: reject 0.30 USDC in deterministic policy and native simulation; token balances remain unchanged.
 5. `revoke`: close the fixed delegation.
 6. No transaction: reject the formerly valid 0.10 USDC payment after revocation; balances remain unchanged.
-7. `closeAuthority`: close the Subscription Authority and clear the token delegate.
-8. Sweep transactions: return the remaining owner and merchant USDC, close both disposable token accounts to recover rent, and return material SOL to the confirmed recovery wallet.
+7. `closeAuthority`: close the Subscription Authority.
+8. `clearTokenDelegate`, when required: explicitly remove any stale SPL token delegate with the disposable owner signer.
+9. Sweep transactions: return the remaining owner and merchant USDC, close both disposable token accounts to recover rent, and return the exact post-fee SOL balance to the confirmed recovery wallet.
 
 The exact number of sweep transactions depends on which balances remain. Negative tests intentionally have no transaction signature because rejection occurs before settlement.
 
@@ -122,12 +133,12 @@ The result is successful only when all of the following are true:
 - native simulation rejects 100,000 base units after revocation without changing balances;
 - the Subscription Authority is closed and the owner's token delegate is empty;
 - independent verification reproduces the terminal state;
-- the sweep closes both disposable USDC accounts, leaves no canary USDC, and leaves at most 25,000 fee-reserve lamports on the facilitator.
+- the sweep closes both disposable USDC accounts and leaves all four disposable wallets with zero USDC and zero SOL.
 
 ## Failure response
 
-Do not rerun `run` with the same run ID after any transaction was submitted. First inspect `state.json` and every recorded Explorer link. If an active delegation remains, revoke it with the original disposable owner and facilitator signers. Preserve the evidence even when aborted. Sweep only after the terminal account state is known.
+Do not rerun `run` with the same run ID after any transaction was submitted. First inspect `state.json` and every recorded Explorer link. If an active delegation remains, use `contain --execute` with the original disposable owner and facilitator signers, then `finalize --execute`. The current mainnet program requires the pinned facilitator `receiver` trailing account on revoke and authority-close instructions even though the installed SDK marks it optional. Preserve the evidence even when aborted. Sweep only after the terminal account state is known and the explicit SPL token-delegate check passes.
 
 ## Repository evidence after completion
 
-After a successful canary and sweep, add a reviewed copy of the sanitized external report as `docs/PHASE_7_MAINNET_EVIDENCE.md`, update the README and submission checklist with the public transaction links, and run the full CI, dependency audit, and secret scan again. Never copy `state.json`, keypair files, `runtime.env`, RPC URLs, or API keys into Git.
+Run `BR-MN-20260810-001` completed this procedure successfully. Its reviewed public record is [`PHASE_7_MAINNET_EVIDENCE.md`](./PHASE_7_MAINNET_EVIDENCE.md) with a companion [`PHASE_7_MAINNET_REPORT.html`](./PHASE_7_MAINNET_REPORT.html). Never copy `state.json`, keypair files, `runtime.env`, RPC URLs, or API keys into Git.

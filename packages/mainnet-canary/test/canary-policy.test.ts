@@ -122,14 +122,16 @@ describe("Phase 7 mainnet canary policy", () => {
   });
 
   it("requires both the execute flag and exact acknowledgement for writes", () => {
-    expect(() =>
-      parseCanaryConfig({
-        action: "run",
-        env: environment(),
-        repoRoot,
-        execute: false,
-      })
-    ).toThrow("--execute");
+    for (const action of ["run", "contain", "finalize", "sweep"] as const) {
+      expect(() =>
+        parseCanaryConfig({
+          action,
+          env: environment(),
+          repoRoot,
+          execute: false,
+        })
+      ).toThrow("--execute");
+    }
 
     expect(() =>
       parseCanaryConfig({

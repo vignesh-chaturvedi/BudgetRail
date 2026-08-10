@@ -1,6 +1,9 @@
 import { generateKeyPairSigner } from "@solana/kit";
 import { describe, expect, it } from "vitest";
-import { getSystemTransferInstruction } from "../../../scripts/mainnet-canary";
+import {
+  calculateExactSolDrain,
+  getSystemTransferInstruction,
+} from "../../../scripts/mainnet-canary";
 
 describe("canary SOL sweep instruction", () => {
   it("encodes the canonical System Program transfer discriminator and u64 lamports", async () => {
@@ -34,5 +37,11 @@ describe("canary SOL sweep instruction", () => {
     expect(() =>
       getSystemTransferInstruction(source, destination.address, 0n)
     ).toThrow("positive");
+  });
+
+  it("subtracts the exact finalized fee and rejects an undrainable balance", () => {
+    expect(calculateExactSolDrain(20_000n, 5_000n)).toBe(15_000n);
+    expect(() => calculateExactSolDrain(5_000n, 5_000n)).toThrow("not enough");
+    expect(() => calculateExactSolDrain(4_999n, 5_000n)).toThrow("not enough");
   });
 });

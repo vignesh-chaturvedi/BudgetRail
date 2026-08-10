@@ -19,9 +19,18 @@ import {
 import {
   AccountRole,
   address,
+  appendTransactionMessageInstruction,
+  compileTransactionMessage,
   createEmptyClient,
   createKeyPairSignerFromBytes,
+  createTransactionMessage,
+  getBase64EncodedWireTransaction,
+  getCompiledTransactionMessageEncoder,
   isNone,
+  pipe,
+  setTransactionMessageFeePayer,
+  setTransactionMessageLifetimeUsingBlockhash,
+  signTransactionMessageWithSigners,
   type Address,
   type Instruction,
   type Signature,
@@ -85,7 +94,6 @@ const MERCHANT_RESOURCE_URL =
   "https://merchant.budgetrail.test/api/mainnet-canary";
 const MERCHANT_RESOURCE_ORIGIN = "https://merchant.budgetrail.test";
 const SYSTEM_PROGRAM = address("11111111111111111111111111111111");
-const FACILITATOR_SWEEP_RESERVE_LAMPORTS = 25_000n;
 const FINALIZATION_ATTEMPTS = 45;
 const FINALIZATION_POLL_MS = 1_500;
 
@@ -102,6 +110,8 @@ Actions:
   addresses  Record public addresses only
   preflight  Verify clean Git state, private RPC, wallets, funds, and accounts
   run        Execute the fixed canary sequence (requires --execute + acknowledgement)
+  contain    Revoke only the recorded active delegation after an aborted run
+  finalize   Finish post-revoke proof and close authority after containment
   verify     Re-verify finalized transactions and terminal on-chain state
   sweep      Return USDC and material SOL to the recovery wallet
   report     Regenerate sanitized evidence Markdown from state.json
@@ -458,6 +468,37 @@ async function recordTransaction(
   addCanaryEvent(evidence, name, "pass", `Finalized at slot ${finalizedSlot}.`);
   writeEvidence(config, evidence);
   return finalizedSlot;
+}
+
+async function ensureTokenDelegateCleared(
+  config: CanaryConfig,
+  evidence: CanaryEvidence,
+  rpc: MainnetRpc,
+  ownerClient: ReturnType<typeof createCanaryClient>,
+  owner: CanarySigner,
+  ownerAta: Address
+) {
+  let tokenAccount = await fetchToken(rpc, ownerAta, {
+    commitment: "finalized",
+  });
+  if (!isNone(tokenAccount.data.delegate)) {
+    const revoked = await ownerClient.token.instructions
+      .revoke({ source: ownerAta, owner })
+      .sendTransaction();
+    await recordTransaction(
+      config,
+      evidence,
+      rpc,
+      "clearTokenDelegate",
+      revoked.context.signature
+    );
+    tokenAccount = await fetchToken(rpc, ownerAta, {
+      commitment: "finalized",
+    });
+  }
+  if (!isNone(tokenAccount.data.delegate)) {
+    throw new Error("Owner USDC account still has a token delegate.");
+  }
 }
 
 function paymentRequired(
@@ -937,7 +978,10 @@ async function executeCanary(config: CanaryConfig, signers: CanarySigners) {
   writeEvidence(config, evidence);
 
   const revoke = await ownerClient.subscriptions.instructions
-    .revokeDelegation({ delegationAccount: delegation })
+    .revokeDelegation({
+      delegationAccount: delegation,
+      receiver: signers.facilitator.address,
+    })
     .sendTransaction();
   await recordTransaction(
     config,
@@ -998,6 +1042,7 @@ async function executeCanary(config: CanaryConfig, signers: CanarySigners) {
 
   const close = await ownerClient.subscriptions.instructions
     .closeSubscriptionAuthority({
+      receiver: signers.facilitator.address,
       tokenMint: address(MAINNET_USDC_MINT),
       user: signers.owner,
     })
@@ -1009,26 +1054,27 @@ async function executeCanary(config: CanaryConfig, signers: CanarySigners) {
     "closeAuthority",
     close.context.signature
   );
-  const [authorityInfo, ownerTokenAccount] = await Promise.all([
-    rpc
-      .getAccountInfo(subscriptionAuthority, {
-        commitment: "finalized",
-        encoding: "base64",
-      })
-      .send(),
-    fetchToken(rpc, ownerToken.ata, { commitment: "finalized" }),
-  ]);
+  const authorityInfo = await rpc
+    .getAccountInfo(subscriptionAuthority, {
+      commitment: "finalized",
+      encoding: "base64",
+    })
+    .send();
   if (authorityInfo.value) {
     throw new Error("Subscription Authority still exists after close.");
   }
-  if (!isNone(ownerTokenAccount.data.delegate)) {
-    throw new Error(
-      "Owner USDC account still has a token delegate after close."
-    );
-  }
+  await ensureTokenDelegateCleared(
+    config,
+    evidence,
+    rpc,
+    ownerClient,
+    signers.owner,
+    ownerToken.ata
+  );
   evidence.verification.authorityClosed = true;
   evidence.verification.tokenDelegateCleared = true;
   evidence.verification.finalSlot =
+    evidence.transactions.clearTokenDelegate?.finalizedSlot ??
     evidence.transactions.closeAuthority!.finalizedSlot;
   evidence.status = "canary-passed";
   addCanaryEvent(
@@ -1041,8 +1087,13 @@ async function executeCanary(config: CanaryConfig, signers: CanarySigners) {
   return evidence;
 }
 
-async function verifyCanary(config: CanaryConfig) {
+async function verifyCanary(config: CanaryConfig, signers: CanarySigners) {
   const evidence = readEvidence(config);
+  for (const role of Object.keys(signers) as CanaryRole[]) {
+    if (evidence.addresses[role] !== signers[role].address) {
+      throw new Error(`${role} signer does not match the recorded evidence.`);
+    }
+  }
   const rpc = createRpcClient(MAINNET_CAIP2, config.rpcUrl);
   assertNetworkFacts(await networkFacts(rpc));
   let maxSlot = 0n;
@@ -1071,6 +1122,33 @@ async function verifyCanary(config: CanaryConfig) {
       .send();
     if (account.value) throw new Error("Subscription Authority is not closed.");
   }
+  if (evidence.status === "canary-passed") {
+    if (!evidence.addresses.ownerAta) {
+      throw new Error("Owner USDC account was not recorded.");
+    }
+    const tokenAccount = await fetchToken(
+      rpc,
+      address(evidence.addresses.ownerAta),
+      { commitment: "finalized" }
+    );
+    if (!isNone(tokenAccount.data.delegate)) {
+      throw new Error("Owner USDC token delegate is not cleared.");
+    }
+    const snapshot = await balances(rpc, signers);
+    if (
+      BigInt(snapshot.ownerUsdc) !==
+        ALLOWANCE_BASE_UNITS - PAYMENT_BASE_UNITS ||
+      BigInt(snapshot.merchantUsdc) !== PAYMENT_BASE_UNITS
+    ) {
+      throw new Error("Final token balances do not match the canary payment.");
+    }
+    if (
+      !evidence.negativeTests.overBudget?.balancesUnchanged ||
+      !evidence.negativeTests.postRevoke?.balancesUnchanged
+    ) {
+      throw new Error("Negative-test evidence is incomplete.");
+    }
+  }
   if (evidence.status === "swept") {
     for (const [label, value] of [
       ["Owner", evidence.addresses.ownerAta],
@@ -1086,6 +1164,26 @@ async function verifyCanary(config: CanaryConfig) {
       if (account.value)
         throw new Error(`${label} USDC account is not closed.`);
     }
+    const snapshot = await balances(rpc, signers);
+    if (
+      BigInt(snapshot.ownerUsdc) !== 0n ||
+      BigInt(snapshot.merchantUsdc) !== 0n ||
+      BigInt(snapshot.ownerSolLamports) !== 0n ||
+      BigInt(snapshot.agentSolLamports) !== 0n ||
+      BigInt(snapshot.facilitatorSolLamports) !== 0n ||
+      BigInt(snapshot.merchantSolLamports) !== 0n
+    ) {
+      throw new Error(
+        "Disposable wallets do not have a zero terminal balance."
+      );
+    }
+    evidence.balances.afterSweep = snapshot;
+  }
+  if (
+    !evidence.negativeTests.overBudget?.balancesUnchanged ||
+    !evidence.negativeTests.postRevoke?.balancesUnchanged
+  ) {
+    throw new Error("Negative-test evidence is incomplete.");
   }
   evidence.verification ??= {
     delegationMatched: false,
@@ -1096,6 +1194,9 @@ async function verifyCanary(config: CanaryConfig) {
   };
   evidence.verification.delegationClosed = true;
   evidence.verification.authorityClosed = true;
+  if (evidence.status === "canary-passed") {
+    evidence.verification.tokenDelegateCleared = true;
+  }
   if (evidence.status === "swept") {
     evidence.verification.ownerAtaClosed = true;
     evidence.verification.merchantAtaClosed = true;
@@ -1106,6 +1207,244 @@ async function verifyCanary(config: CanaryConfig) {
     "independent-verification",
     "pass",
     `Re-verified finalized signatures and terminal accounts through slot ${maxSlot}.`
+  );
+  writeEvidence(config, evidence);
+  return evidence;
+}
+
+async function containCanary(config: CanaryConfig, signers: CanarySigners) {
+  const evidence = readEvidence(config);
+  if (!evidence.addresses.delegation) {
+    throw new Error("No recorded delegation is available to contain.");
+  }
+  const rpc = createRpcClient(MAINNET_CAIP2, config.rpcUrl);
+  assertNetworkFacts(await networkFacts(rpc));
+  const delegation = address(evidence.addresses.delegation);
+  const account = await rpc
+    .getAccountInfo(delegation, {
+      commitment: "finalized",
+      encoding: "base64",
+    })
+    .send();
+  if (!account.value) {
+    evidence.status = "contained";
+    evidence.verification ??= {
+      delegationMatched: false,
+      paymentDeltaMatched: false,
+      delegationClosed: true,
+      authorityClosed: false,
+      tokenDelegateCleared: false,
+    };
+    evidence.verification.delegationClosed = true;
+    addCanaryEvent(
+      evidence,
+      "containment",
+      "pass",
+      "The recorded delegation was already closed."
+    );
+    writeEvidence(config, evidence);
+    return evidence;
+  }
+
+  const decoded = await fetchFixedDelegation(rpc, delegation, {
+    commitment: "finalized",
+  });
+  if (
+    decoded.data.header.delegator !== signers.owner.address ||
+    decoded.data.header.delegatee !== signers.agent.address ||
+    decoded.data.mint !== MAINNET_USDC_MINT ||
+    decoded.data.amount > ALLOWANCE_BASE_UNITS
+  ) {
+    throw new Error(
+      "The active delegation does not match the recorded canary."
+    );
+  }
+
+  const client = createCanaryClient(
+    signers.owner,
+    signers.facilitator,
+    config.rpcUrl!
+  );
+  const result = await client.subscriptions.instructions
+    .revokeDelegation({
+      delegationAccount: delegation,
+      receiver: signers.facilitator.address,
+    })
+    .sendTransaction();
+  await recordTransaction(
+    config,
+    evidence,
+    rpc,
+    "revoke",
+    result.context.signature
+  );
+  const after = await rpc
+    .getAccountInfo(delegation, {
+      commitment: "finalized",
+      encoding: "base64",
+    })
+    .send();
+  if (after.value)
+    throw new Error("Delegation remains active after containment.");
+  evidence.status = "contained";
+  evidence.verification ??= {
+    delegationMatched: true,
+    paymentDeltaMatched: false,
+    delegationClosed: true,
+    authorityClosed: false,
+    tokenDelegateCleared: false,
+  };
+  evidence.verification.delegationClosed = true;
+  addCanaryEvent(
+    evidence,
+    "containment",
+    "pass",
+    "Revoked the active fixed delegation and verified its account is closed."
+  );
+  writeEvidence(config, evidence);
+  return evidence;
+}
+
+async function finalizeContainedCanary(
+  config: CanaryConfig,
+  signers: CanarySigners
+) {
+  const evidence = readEvidence(config);
+  if (
+    evidence.status !== "contained" ||
+    !evidence.transactions.setup ||
+    !evidence.transactions.delegation ||
+    !evidence.transactions.payment ||
+    !evidence.transactions.revoke ||
+    !evidence.verification?.delegationMatched ||
+    !evidence.verification.paymentDeltaMatched ||
+    !evidence.verification.delegationClosed ||
+    !evidence.addresses.delegation ||
+    !evidence.addresses.subscriptionAuthority ||
+    !evidence.addresses.ownerAta
+  ) {
+    throw new Error("Contained canary evidence is incomplete or inconsistent.");
+  }
+
+  const rpc = createRpcClient(MAINNET_CAIP2, config.rpcUrl);
+  assertNetworkFacts(await networkFacts(rpc));
+  const [delegationInfo, authorityInfo] = await Promise.all([
+    rpc
+      .getAccountInfo(address(evidence.addresses.delegation), {
+        commitment: "finalized",
+        encoding: "base64",
+      })
+      .send(),
+    rpc
+      .getAccountInfo(address(evidence.addresses.subscriptionAuthority), {
+        commitment: "finalized",
+        encoding: "base64",
+      })
+      .send(),
+  ]);
+  if (delegationInfo.value) {
+    throw new Error("Delegation is active; refusing to finalize containment.");
+  }
+  const beforePostRevoke = await balances(rpc, signers);
+  if (
+    BigInt(beforePostRevoke.ownerUsdc) !==
+      ALLOWANCE_BASE_UNITS - PAYMENT_BASE_UNITS ||
+    BigInt(beforePostRevoke.merchantUsdc) !== PAYMENT_BASE_UNITS
+  ) {
+    throw new Error("Post-containment token balances do not match the canary.");
+  }
+  if (!evidence.negativeTests.postRevoke?.balancesUnchanged) {
+    const facilitator = createFacilitator(config, signers.facilitator);
+    const postRevoke = await createPayload(
+      config,
+      signers,
+      PAYMENT_BASE_UNITS,
+      `budgetrail-${config.runId}-post-revoke`
+    );
+    const postRevokeVerification = await facilitator.verify(
+      postRevoke.paymentPayload,
+      postRevoke.requirement
+    );
+    const afterPostRevoke = await balances(rpc, signers);
+    if (postRevokeVerification.isValid) {
+      throw new Error(
+        "Native simulation accepted a payment after containment."
+      );
+    }
+    if (!samePaymentBalances(beforePostRevoke, afterPostRevoke)) {
+      throw new Error("The post-containment probe changed token balances.");
+    }
+    evidence.negativeTests.postRevoke = {
+      simulation: "rejected",
+      reason: safeDetail(
+        postRevokeVerification.invalidReason ?? "Revoked delegation rejection",
+        config
+      ),
+      balancesUnchanged: true,
+    };
+    evidence.balances.afterNegativeTests = afterPostRevoke;
+    addCanaryEvent(
+      evidence,
+      "post-revoke",
+      "pass",
+      "Restricted native simulation rejected the formerly valid payment after containment with balances unchanged."
+    );
+    writeEvidence(config, evidence);
+  }
+
+  const ownerClient = createCanaryClient(
+    signers.owner,
+    signers.facilitator,
+    config.rpcUrl!
+  );
+  if (authorityInfo.value) {
+    const close = await ownerClient.subscriptions.instructions
+      .closeSubscriptionAuthority({
+        receiver: signers.facilitator.address,
+        tokenMint: address(MAINNET_USDC_MINT),
+        user: signers.owner,
+      })
+      .sendTransaction();
+    await recordTransaction(
+      config,
+      evidence,
+      rpc,
+      "closeAuthority",
+      close.context.signature
+    );
+  } else if (!evidence.transactions.closeAuthority) {
+    throw new Error(
+      "Authority is missing without a recorded close transaction."
+    );
+  }
+  const authorityAfter = await rpc
+    .getAccountInfo(address(evidence.addresses.subscriptionAuthority), {
+      commitment: "finalized",
+      encoding: "base64",
+    })
+    .send();
+  if (authorityAfter.value) {
+    throw new Error("Subscription Authority still exists after close.");
+  }
+  await ensureTokenDelegateCleared(
+    config,
+    evidence,
+    rpc,
+    ownerClient,
+    signers.owner,
+    address(evidence.addresses.ownerAta)
+  );
+  evidence.verification.authorityClosed = true;
+  evidence.verification.tokenDelegateCleared = true;
+  evidence.verification.finalSlot =
+    evidence.transactions.clearTokenDelegate?.finalizedSlot ??
+    evidence.transactions.closeAuthority!.finalizedSlot;
+  evidence.status = "canary-passed";
+  addCanaryEvent(
+    evidence,
+    "canary",
+    "pass",
+    "Recovered from the SDK trailing-account mismatch; all positive and negative invariants passed."
   );
   writeEvidence(config, evidence);
   return evidence;
@@ -1133,6 +1472,78 @@ function getSystemTransferInstruction(
     ],
     data,
   };
+}
+
+async function sweepExactSolBalance(
+  config: CanaryConfig,
+  evidence: CanaryEvidence,
+  rpc: MainnetRpc,
+  source: CanarySigner,
+  destination: Address,
+  name: "sweepFacilitatorSol"
+) {
+  const balance = BigInt(
+    (await rpc.getBalance(source.address, { commitment: "finalized" }).send())
+      .value
+  );
+  if (balance === 0n) return;
+
+  const latest = await rpc
+    .getLatestBlockhash({ commitment: "finalized" })
+    .send();
+  const buildMessage = (lamports: bigint) =>
+    pipe(
+      createTransactionMessage({ version: 0 }),
+      (message) => setTransactionMessageFeePayer(source.address, message),
+      (message) =>
+        appendTransactionMessageInstruction(
+          getSystemTransferInstruction(source, destination, lamports),
+          message
+        ),
+      (message) =>
+        setTransactionMessageLifetimeUsingBlockhash(latest.value, message)
+    );
+
+  const feeMessage = compileTransactionMessage(buildMessage(1n));
+  const feeBytes = getCompiledTransactionMessageEncoder().encode(feeMessage);
+  const feeResponse = await rpc
+    .getFeeForMessage(Buffer.from(feeBytes).toString("base64") as never, {
+      commitment: "finalized",
+    })
+    .send();
+  if (feeResponse.value === null) {
+    throw new Error("RPC could not calculate the exact SOL sweep fee.");
+  }
+  const fee = BigInt(feeResponse.value);
+  const transferAmount = calculateExactSolDrain(balance, fee);
+
+  const signed = await signTransactionMessageWithSigners(
+    buildMessage(transferAmount)
+  );
+  const signature = await rpc
+    .sendTransaction(getBase64EncodedWireTransaction(signed), {
+      encoding: "base64",
+      maxRetries: 5n,
+      preflightCommitment: "confirmed",
+      skipPreflight: false,
+    })
+    .send();
+  await recordTransaction(config, evidence, rpc, name, String(signature));
+  const after = await rpc
+    .getBalance(source.address, { commitment: "finalized" })
+    .send();
+  if (BigInt(after.value) !== 0n) {
+    throw new Error("Facilitator SOL account was not drained exactly.");
+  }
+}
+
+function calculateExactSolDrain(balance: bigint, fee: bigint) {
+  if (balance <= fee) {
+    throw new Error(
+      "Facilitator balance is not enough for an exact SOL sweep."
+    );
+  }
+  return balance - fee;
 }
 
 async function sweepCanary(config: CanaryConfig, signers: CanarySigners) {
@@ -1219,35 +1630,57 @@ async function sweepCanary(config: CanaryConfig, signers: CanarySigners) {
     );
   }
 
-  const closeOwnerAta = await ownerClient.token.instructions
-    .closeAccount({
-      account: ownerToken.ata,
-      destination: recovery,
-      owner: signers.owner,
+  const ownerAtaInfo = await rpc
+    .getAccountInfo(ownerToken.ata, {
+      commitment: "finalized",
+      encoding: "base64",
     })
-    .sendTransaction();
-  await recordTransaction(
-    config,
-    evidence,
-    rpc,
-    "closeOwnerAta",
-    closeOwnerAta.context.signature
-  );
+    .send();
+  if (ownerAtaInfo.value) {
+    const closeOwnerAta = await ownerClient.token.instructions
+      .closeAccount({
+        account: ownerToken.ata,
+        destination: recovery,
+        owner: signers.owner,
+      })
+      .sendTransaction();
+    await recordTransaction(
+      config,
+      evidence,
+      rpc,
+      "closeOwnerAta",
+      closeOwnerAta.context.signature
+    );
+  } else if (!evidence.transactions.closeOwnerAta) {
+    throw new Error("Owner USDC account is missing without closure evidence.");
+  }
 
-  const closeMerchantAta = await merchantClient.token.instructions
-    .closeAccount({
-      account: merchantToken.ata,
-      destination: recovery,
-      owner: signers.merchant,
+  const merchantAtaInfo = await rpc
+    .getAccountInfo(merchantToken.ata, {
+      commitment: "finalized",
+      encoding: "base64",
     })
-    .sendTransaction();
-  await recordTransaction(
-    config,
-    evidence,
-    rpc,
-    "closeMerchantAta",
-    closeMerchantAta.context.signature
-  );
+    .send();
+  if (merchantAtaInfo.value) {
+    const closeMerchantAta = await merchantClient.token.instructions
+      .closeAccount({
+        account: merchantToken.ata,
+        destination: recovery,
+        owner: signers.merchant,
+      })
+      .sendTransaction();
+    await recordTransaction(
+      config,
+      evidence,
+      rpc,
+      "closeMerchantAta",
+      closeMerchantAta.context.signature
+    );
+  } else if (!evidence.transactions.closeMerchantAta) {
+    throw new Error(
+      "Merchant USDC account is missing without closure evidence."
+    );
+  }
   evidence.verification.ownerAtaClosed = true;
   evidence.verification.merchantAtaClosed = true;
   writeEvidence(config, evidence);
@@ -1272,33 +1705,14 @@ async function sweepCanary(config: CanaryConfig, signers: CanarySigners) {
     );
   }
 
-  const facilitatorLamports = BigInt(
-    (
-      await rpc
-        .getBalance(signers.facilitator.address, { commitment: "finalized" })
-        .send()
-    ).value
+  await sweepExactSolBalance(
+    config,
+    evidence,
+    rpc,
+    signers.facilitator,
+    recovery,
+    "sweepFacilitatorSol"
   );
-  if (facilitatorLamports > FACILITATOR_SWEEP_RESERVE_LAMPORTS) {
-    const result = await createCanaryClient(
-      signers.facilitator,
-      signers.facilitator,
-      config.rpcUrl!
-    ).sendTransaction([
-      getSystemTransferInstruction(
-        signers.facilitator,
-        recovery,
-        facilitatorLamports - FACILITATOR_SWEEP_RESERVE_LAMPORTS
-      ),
-    ]);
-    await recordTransaction(
-      config,
-      evidence,
-      rpc,
-      "sweepFacilitatorSol",
-      result.context.signature
-    );
-  }
 
   const after = await balances(rpc, signers);
   evidence.balances.afterSweep = after;
@@ -1306,16 +1720,18 @@ async function sweepCanary(config: CanaryConfig, signers: CanarySigners) {
     BigInt(after.ownerUsdc) !== 0n ||
     BigInt(after.merchantUsdc) !== 0n ||
     BigInt(after.ownerSolLamports) !== 0n ||
-    BigInt(after.facilitatorSolLamports) > FACILITATOR_SWEEP_RESERVE_LAMPORTS
+    BigInt(after.agentSolLamports) !== 0n ||
+    BigInt(after.facilitatorSolLamports) !== 0n ||
+    BigInt(after.merchantSolLamports) !== 0n
   ) {
-    throw new Error("Material canary balances remain after sweep.");
+    throw new Error("Disposable canary balances remain after sweep.");
   }
   evidence.status = "swept";
   addCanaryEvent(
     evidence,
     "sweep",
     "pass",
-    `USDC, token-account rent, and material SOL returned to ${recovery}; disposable token accounts were closed and at most ${FACILITATOR_SWEEP_RESERVE_LAMPORTS} fee-reserve lamports remain.`
+    `USDC, token-account rent, and material SOL returned to ${recovery}; disposable token accounts were closed and the facilitator SOL account was drained exactly after its final network fee.`
   );
   writeEvidence(config, evidence);
   return evidence;
@@ -1349,7 +1765,10 @@ async function emergencyCleanup(
       config.rpcUrl
     );
     const result = await client.subscriptions.instructions
-      .revokeDelegation({ delegationAccount: delegation })
+      .revokeDelegation({
+        delegationAccount: delegation,
+        receiver: signers.facilitator.address,
+      })
       .sendTransaction();
     await recordTransaction(
       config,
@@ -1488,12 +1907,45 @@ async function main() {
     return;
   }
   if (action === "verify") {
-    const evidence = await verifyCanary(config);
+    const evidence = await verifyCanary(config, signers);
     console.log(
       JSON.stringify(
         {
           status: "canary-independently-verified",
           canaryStatus: evidence.status,
+          verification: evidence.verification,
+          reportPath: resolve(config.evidenceDir, "report.md"),
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
+  if (action === "contain") {
+    const evidence = await containCanary(config, signers);
+    console.log(
+      JSON.stringify(
+        {
+          status: evidence.status,
+          revoke: evidence.transactions.revoke,
+          delegationClosed: evidence.verification?.delegationClosed,
+          reportPath: resolve(config.evidenceDir, "report.md"),
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
+  if (action === "finalize") {
+    const evidence = await finalizeContainedCanary(config, signers);
+    console.log(
+      JSON.stringify(
+        {
+          status: evidence.status,
+          closeAuthority: evidence.transactions.closeAuthority,
+          postRevoke: evidence.negativeTests.postRevoke,
           verification: evidence.verification,
           reportPath: resolve(config.evidenceDir, "report.md"),
         },
@@ -1569,4 +2021,4 @@ if (
   });
 }
 
-export { getSystemTransferInstruction };
+export { calculateExactSolDrain, getSystemTransferInstruction };

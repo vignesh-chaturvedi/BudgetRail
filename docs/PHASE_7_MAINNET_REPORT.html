@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BudgetRail — Phase 7 Mainnet Report</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07110f;
+        --panel: #0c1c18;
+        --line: #24433a;
+        --text: #e8f6f0;
+        --muted: #9cb9ae;
+        --green: #54e6a2;
+        --amber: #f4c76b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 80% 0, #163f33 0, transparent 34rem),
+          var(--bg);
+        color: var(--text);
+        font:
+          16px/1.55 Inter,
+          ui-sans-serif,
+          system-ui,
+          sans-serif;
+      }
+      main {
+        width: min(1100px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 72px 0;
+      }
+      h1,
+      h2 {
+        margin: 0;
+        letter-spacing: -0.035em;
+      }
+      h1 {
+        max-width: 850px;
+        font-size: clamp(2.6rem, 7vw, 5.4rem);
+        line-height: 0.98;
+      }
+      h2 {
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+      }
+      p {
+        color: var(--muted);
+      }
+      a {
+        color: var(--green);
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      .eyebrow,
+      .status {
+        color: var(--green);
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .lead {
+        max-width: 760px;
+        margin: 28px 0 42px;
+        font-size: 1.2rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .card,
+      section {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: color-mix(in srgb, var(--panel) 93%, transparent);
+      }
+      .card {
+        padding: 22px;
+      }
+      .card strong {
+        display: block;
+        font-size: 1.9rem;
+      }
+      .card span {
+        color: var(--muted);
+      }
+      section {
+        margin-top: 16px;
+        padding: 28px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .pass {
+        color: var(--green);
+        font-weight: 750;
+      }
+      .finding {
+        border-color: #594a29;
+      }
+      .finding h2 {
+        color: var(--amber);
+      }
+      .foot {
+        margin-top: 28px;
+        font-size: 0.9rem;
+      }
+      @media (max-width: 760px) {
+        main {
+          padding: 42px 0;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        section {
+          overflow-x: auto;
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">BudgetRail / Phase 7</p>
+      <h1>A real mainnet payment with a hard budget rail.</h1>
+      <p class="lead">
+        Run <code>BR-MN-20260810-001</code> settled exactly 0.10 USDC from a
+        0.20 USDC delegation, rejected two unsafe attempts, revoked all
+        authority, and recovered every disposable balance.
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <strong class="status">Pass</strong><span>Canary status: swept</span>
+        </div>
+        <div class="card">
+          <strong>0.10 USDC</strong><span>Exact mainnet settlement</span>
+        </div>
+        <div class="card">
+          <strong>0</strong><span>Final disposable SOL and USDC</span>
+        </div>
+      </div>
+
+      <section>
+        <h2>Proof loop</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th>Outcome</th>
+              <th>Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Delegate</td>
+              <td>0.20 USDC fixed authority</td>
+              <td>
+                <a
+                  href="https://explorer.solana.com/tx/3JmKg2tmF4wEgqaWPzCCDwRDbFBu8YCpCdgPhyStdAK3sex8BGsSgPvAxMKAW7U8kgjCqoPuTiRen3jDgDzUd9GM?cluster=mainnet-beta"
+                  >Slot 438354964</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Pay</td>
+              <td>Exactly 0.10 USDC settled</td>
+              <td>
+                <a
+                  href="https://explorer.solana.com/tx/2rLj5LajHdsZzG7tdtmMrWE2vLDzbt9npGBMGJ2DdEktkUsNxRsc1Hm9dAZ3VjoQmFRZJmyPRshs1W2oUyar8Qis?cluster=mainnet-beta"
+                  >Slot 438355000</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Challenge cap</td>
+              <td>0.30 USDC rejected; balances unchanged</td>
+              <td class="pass">PASS</td>
+            </tr>
+            <tr>
+              <td>Revoke</td>
+              <td>Delegation account closed</td>
+              <td>
+                <a
+                  href="https://explorer.solana.com/tx/5qe2EWvaaEb5991DC3oScw2RpHu6dWe3AeMRPXVY4Kocf7g8nFTj2azrRFYVuPvJrFi8NrMfBEhFHQJwCj8HTTks?cluster=mainnet-beta"
+                  >Slot 438355289</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Prove</td>
+              <td>Formerly valid payment rejected; balances unchanged</td>
+              <td class="pass">PASS</td>
+            </tr>
+            <tr>
+              <td>Recover</td>
+              <td>USDC, rent, and exact post-fee SOL swept</td>
+              <td>
+                <a
+                  href="https://explorer.solana.com/tx/5sXrmW2q2RKbYpe9eFWXKH6z6iQq41c9XpkrUm3z7Sqk6WasZkCBZ1JoFk2PGVmPAhnES28d7D7aywKfJ2MNkkCx?cluster=mainnet-beta"
+                  >Slot 438357104</a
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Terminal invariants</h2>
+        <table>
+          <tbody>
+            <tr>
+              <td>Payment delta</td>
+              <td class="pass">100,000 base units — PASS</td>
+            </tr>
+            <tr>
+              <td>Over-budget and post-revoke balance changes</td>
+              <td class="pass">0 — PASS</td>
+            </tr>
+            <tr>
+              <td>Delegation / Subscription Authority / SPL delegate</td>
+              <td class="pass">Absent — PASS</td>
+            </tr>
+            <tr>
+              <td>Owner and merchant token accounts</td>
+              <td class="pass">Closed — PASS</td>
+            </tr>
+            <tr>
+              <td>Owner / agent / facilitator / merchant final balances</td>
+              <td class="pass">0 SOL and 0 USDC — PASS</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="finding">
+        <h2>Mainnet finding, safely contained</h2>
+        <p>
+          Mainnet exposed an SDK/program mismatch: the SDK treated a trailing
+          receiver account as optional while the deployed Subscriptions Program
+          required it during revoke. The canary journal stopped replay,
+          preserved the live state, supplied the pinned facilitator as receiver,
+          and finalized containment. No excess payment occurred. An explicit
+          Token Program revoke then cleared the stale SPL delegate before the
+          recovery sweep.
+        </p>
+      </section>
+
+      <p class="foot">
+        Independently verified through finalized slot <code>438357104</code>.
+        This bounded local canary does not enable mainnet writes in the hosted
+        app. See
+        <a href="PHASE_7_MAINNET_EVIDENCE.md">the full evidence report</a> for
+        every address, transaction, slot, balance, and secret-handling
+        statement.
+      </p>
+    </main>
+  </body>
+</html>

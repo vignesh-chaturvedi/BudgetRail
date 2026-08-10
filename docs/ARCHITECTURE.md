@@ -48,6 +48,9 @@ The public grant demo must run as exactly one long-lived Linux x64 container. Se
 - `BUDGETRAIL_ENABLE_MAINNET_WRITES=true` is a tripwire that blocks readiness; it does not enable writes.
 - A separate local CLI may execute only the fixed Phase 7 canary after a clean-commit check, private-RPC verification, exact-balance preflight, `--execute`, and the exact acknowledgement phrase.
 - The canary is capped at 0.20 USDC and 0.05 combined SOL, uses disposable external keypairs, and closes delegated authority before funds are swept.
+- The canary journal records each finalized write before advancing. Guarded `contain` and `finalize` actions resume cleanup without replaying a partially completed payment sequence.
+- Revoke and authority-close instructions supply the pinned facilitator as the trailing receiver account; terminal verification separately requires the native delegation, Subscription Authority, and SPL token delegate to be absent.
+- Recovery queries the fee for the exact final transaction, transfers `balance - fee`, closes both disposable token accounts, and proves zero terminal balances.
 - No private key, seed phrase, funded mainnet signer, or authenticated RPC URL belongs in source or any `NEXT_PUBLIC_*` variable.
 - Public actions have per-client quotas; the hosting proxy must overwrite client-IP headers.
 - Hosted registry writes use the live same-origin agent card; local proofs use the stable repository metadata fallback.

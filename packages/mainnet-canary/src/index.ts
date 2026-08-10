@@ -28,6 +28,8 @@ export const CANARY_ACTIONS = [
   "addresses",
   "preflight",
   "run",
+  "contain",
+  "finalize",
   "verify",
   "sweep",
   "report",
@@ -73,6 +75,7 @@ export type CanaryTransactionName =
   | "payment"
   | "revoke"
   | "closeAuthority"
+  | "clearTokenDelegate"
   | "sweepOwnerUsdc"
   | "sweepMerchantUsdc"
   | "closeOwnerAta"
@@ -94,6 +97,7 @@ export type CanaryEvidence = {
     | "preflight-passed"
     | "running"
     | "canary-passed"
+    | "contained"
     | "swept"
     | "aborted";
   createdAtUtc: string;
@@ -279,7 +283,7 @@ export function parseCanaryConfig({
     }
   }
 
-  if (["run", "sweep"].includes(action)) {
+  if (["run", "contain", "finalize", "sweep"].includes(action)) {
     if (!execute) {
       throw new Error(`${action} requires the --execute flag.`);
     }

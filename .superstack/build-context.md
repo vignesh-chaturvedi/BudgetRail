@@ -1,6 +1,6 @@
 # Build Context
 
-> Phase 6 release-candidate handoff updated 2026-08-10. Stop here for the repository push before public deployment.
+> Phase 7 bounded mainnet-canary handoff updated 2026-08-10. The hosted application remains devnet-only.
 
 ## Product
 
@@ -19,7 +19,7 @@
 | Payments            | x402 v2.20 `exact` + BudgetRail delegated payload adapter  | full HTTP 402 request/pay/retry/unlock loop proven       |
 | Identity            | ERC-8004 Solana Agent Registry via `8004-solana` 0.8.2     | identity registration and operational-wallet link proven |
 | Token               | Circle test USDC on devnet; disposable mint in proofs      | exact six-decimal model and balance checks complete      |
-| Testing             | Vitest + Surfpool 1.4                                      | 91 tests + five standalone phase proofs pass             |
+| Testing             | Vitest + Surfpool 1.4                                      | full suite + standalone phase proofs pass                |
 | Package manager     | pnpm 11.20 via Corepack                                    | locked                                                   |
 | License             | MIT                                                        | added                                                    |
 
@@ -98,6 +98,15 @@ Use the audited native delegation program. No custom Anchor program is required:
 - Final container: `linux/amd64`, Node 22, non-root `nextjs`, 98.4 MB; all eight readiness controls pass with mainnet writes locked
 - Exact container judge flow passes Identity → Pay → Challenge cap → Revoke → Prove; 375 px, 768 px, and 1280 px checks have no overflow or browser warnings/errors
 
+## Phase 7 bounded mainnet-canary result
+
+- Run `BR-MN-20260810-001` settled exactly 0.10 canonical mainnet USDC from an exact 0.20 fixed delegation.
+- Deterministic policy and native simulation rejected 0.30 USDC with unchanged balances; the formerly valid 0.10 payment also failed after finalized revocation.
+- A mainnet SDK/program trailing-account mismatch failed closed. Guarded containment supplied the fixed facilitator receiver, finalized revocation, and resumed from the durable journal without replaying payment.
+- Authority closure, explicit SPL delegate removal, USDC recovery, token-account closure, and exact-fee SOL draining all finalized.
+- Independent verification through slot `438357104` found no delegation or authority and zero SOL/USDC across every disposable signer.
+- Mainnet production deployment remains false: this was a local fixed-value canary, and hosted mainnet writes remain locked.
+
 ## Progress
 
 - [x] Idea validated
@@ -112,8 +121,9 @@ Use the audited native delegation program. No custom Anchor program is required:
 - [x] Phase 4 identity, receipts, and operator UX
 - [x] Phase 5 adversarial hardening
 - [x] Phase 6 release candidate and submission package
+- [x] Phase 7 bounded mainnet canary, containment, evidence, and recovery
 - [ ] Public deployment and final live evidence links
 
 ## Next action
 
-Review and push this Phase 6 release candidate to GitHub. Then deploy the exact SHA with `docs/DEPLOYMENT.md`, complete the clean-browser proof, and fill `docs/SUBMISSION_CHECKLIST.md`.
+Review and push the Phase 7 hardening and evidence. Then complete the remaining public demo, clean-browser, video, Colosseum, and grant-link items in `docs/SUBMISSION_CHECKLIST.md`.

@@ -24,7 +24,7 @@ An autonomous agent may spend only the amount, token, network, recipient, and ti
 | Threat                 | Attack                                                    | Existing mitigation                                                                                                                                               | Remaining production action                                    |
 | ---------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Spoofing               | malicious merchant, facilitator, or operational wallet    | exact origin/network/mint/recipient/fee-payer allow-lists; registry read-back; four unique canary addresses; independently confirmed recovery wallet              | require reviewed production identities before wider mainnet    |
-| Tampering              | mutate amount or requirements between challenge and retry | canonical requirement equality; signed payload; fixed mainnet constants; deterministic run nonce; clean-commit preflight                                          | durable transactional replay storage before horizontal scaling |
+| Tampering              | mutate amount or requirements between challenge and retry | canonical requirement equality; signed payload; fixed mainnet constants; deterministic run nonce; clean-commit preflight; durable canary journal                  | durable transactional replay storage before horizontal scaling |
 | Repudiation            | deny payment or revocation                                | Solana signatures, finalized slots, registry receipts, bounded activity records, atomic external evidence journal                                                 | production audit retention before real-value use               |
 | Information disclosure | RPC/API error contains a key or credential                | centralized redaction; fixed errors; keypairs, authenticated RPC, and raw state outside Git; owner-only permissions; current/history/bundle secret scan           | configure hosted log retention and secret scanning             |
 | Denial of service      | repeatedly reset or run expensive proof endpoints         | same-origin mutation guard, operation locks, bounded public quotas; the mainnet CLI is local-only and single-use per run ID                                       | distributed rate limits before horizontal scaling              |
@@ -42,6 +42,8 @@ An autonomous agent may spend only the amount, token, network, recipient, and ti
 8. External error text is not exposed without redaction.
 9. Mainnet canary writes cannot start without a clean committed tree, private mainnet RPC, exact acknowledgement, and exact bounded funding.
 10. A completed canary leaves no delegation, Subscription Authority, token delegate, or disposable USDC account.
+11. A partially finalized canary is contained and resumed from recorded state; the payment sequence is never replayed under the same run ID.
+12. A successful recovery leaves every disposable signer with zero SOL and zero USDC after exact-fee sweeping.
 
 ## Data classification
 
