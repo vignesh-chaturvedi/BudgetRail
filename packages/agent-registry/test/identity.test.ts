@@ -2,11 +2,27 @@ import { Keypair } from "@solana/web3.js";
 import { describe, expect, it, vi } from "vitest";
 import {
   BUDGETRAIL_AGENT_URI,
+  getBudgetRailAgentUri,
   registerBudgetRailIdentity,
   type AgentRegistryPort,
 } from "../src";
 
 describe("BudgetRail Agent Registry adapter", () => {
+  it("uses the hosted same-origin agent card only for a valid HTTPS origin", () => {
+    expect(
+      getBudgetRailAgentUri({
+        NODE_ENV: "test",
+        BUDGETRAIL_PUBLIC_URL: "https://budgetrail.example",
+      })
+    ).toBe("https://budgetrail.example/.well-known/agent.json");
+    expect(
+      getBudgetRailAgentUri({
+        NODE_ENV: "test",
+        BUDGETRAIL_PUBLIC_URL: "http://budgetrail.example",
+      })
+    ).toBe(BUDGETRAIL_AGENT_URI);
+  });
+
   it("registers an identity and verifies the operational wallet link", async () => {
     const owner = Keypair.generate();
     const operationalWallet = Keypair.generate();

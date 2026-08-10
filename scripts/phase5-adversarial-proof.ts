@@ -24,7 +24,9 @@ async function main() {
 
     const purchase = await runtime.runPurchase({ resourceUrl, fetchFn });
     const afterPurchase = await runtime.getPhase4State();
-    const overBudget = await runtime.proveOverBudgetGuardrail();
+    const overBudget = await runtime.proveOverBudgetGuardrail({
+      freshProgramSimulation: true,
+    });
     const afterOverBudget = await runtime.getPhase4State();
     const expired = await runtime.proveExpiredGuardrail();
     const afterExpiry = await runtime.getPhase4State();

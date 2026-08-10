@@ -4,11 +4,13 @@ BudgetRail gives autonomous agents capped, expiring, and instantly revocable tok
 
 ## Build status
 
-**Phases 1–5 are complete. Phase 6 has not started.**
+**Phases 1–5 are complete. The Phase 6 release candidate is ready for public deployment.**
 
 The repository now contains an owner control plane for native fixed USDC delegations, a complete autonomous x402 request → challenge → pay → retry → unlock loop, a verifiable Agent Registry identity, and an adversarial judge console that proves success, over-budget denial, expiry, and revocation. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
 
-Mainnet is intentionally out of scope until the product and safety matrix are complete.
+The final codebase now includes a portable long-running Node container, fail-closed release readiness, public endpoint quotas, dynamic agent metadata, and a complete deployment/demo/submission kit. Public hosting, clean-browser acceptance, the video, and final live evidence links are completed after this commit is pushed.
+
+Mainnet writes remain intentionally locked. This release is approved only as a disposable Solana devnet grant demo.
 
 ## Phase 1 proof
 
@@ -80,9 +82,22 @@ The automated safety matrix now proves:
 
 See [`docs/PHASE_5_EVIDENCE.md`](./docs/PHASE_5_EVIDENCE.md), [`docs/THREAT_MODEL.md`](./docs/THREAT_MODEL.md), and [`docs/PHASE_5_SECURITY_REVIEW.html`](./docs/PHASE_5_SECURITY_REVIEW.html).
 
+## Phase 6 release candidate
+
+The deployment package adds:
+
+- a linux/amd64 Node 22 standalone Docker image for the embedded Surfpool runtime;
+- `/api/health` and fail-closed `/api/readiness` contracts;
+- strict devnet, HTTPS-origin, one-replica, and mainnet-write-lock checks;
+- bounded quotas for every public proof action;
+- deployment, rollback, architecture, demo, and submission documentation;
+- a reproducible `pnpm phase6:release` gate.
+
+Start with [`docs/PHASE_6_EVIDENCE.md`](./docs/PHASE_6_EVIDENCE.md), [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md), and [`docs/SUBMISSION_CHECKLIST.md`](./docs/SUBMISSION_CHECKLIST.md).
+
 ## Run locally
 
-Requirements: Node.js 20.9 or newer and Corepack.
+Requirements: Node.js 22.13 or newer and Corepack (required by pinned pnpm 11.20).
 
 ```bash
 corepack enable pnpm
@@ -95,6 +110,7 @@ pnpm phase2:local
 pnpm phase3:local
 pnpm phase4:local
 pnpm phase5:local
+pnpm phase6:release
 pnpm security:secrets
 pnpm security:audit
 pnpm dev
@@ -111,11 +127,14 @@ The `phase*:local` commands start and stop isolated Surfpool networks. `phase1:d
 - `scripts/phase3-local-proof.ts` — complete autonomous purchase and replay-rejection proof
 - `scripts/phase4-local-proof.ts` — identity, wallet-link, payment, revoke, and fail-closed proof
 - `scripts/phase5-adversarial-proof.ts` — valid, over-budget, expired, and revoked invariant proof
+- `scripts/phase6-release-check.ts` — deployment profile, artifact, repository, and mainnet-lock gate
 - `scripts/security-scan.ts` — current-source, Git-history, and client-bundle credential scan
 - `packages/agent-registry/` — isolated adapter for the ERC-8004 Solana Agent Registry SDK
 - `packages/security/` — bounded redaction for public diagnostics and activity records
 - `app/components/allowances/` — owner allowance control plane
 - `app/components/phase4/` — judge-facing operator console and receipt timeline
+- `app/lib/release/` — hosted-demo readiness and mainnet tripwire
+- `Dockerfile` — portable single-container judge deployment
 - `app/lib/allowances/` — exact amount model, persistence, errors, and native actions
 - `PROJECT_PLAN.html` — interactive project assessment dashboard
 - `PROJECT_PLAN.md` — source-of-truth phased specification
@@ -123,6 +142,8 @@ The `phase*:local` commands start and stop isolated Surfpool networks. `phase1:d
 ## Safety boundary
 
 The LLM never chooses or mutates transaction-critical fields. Network, token mint, recipient, facilitator fee payer, amount, timeout, and resource origin must all match deterministic policy before the agent signs anything.
+
+The public grant demo must run as one long-lived container because its disposable signers and replay store are process-local. It is not a horizontally scaled custody service.
 
 ## License
 

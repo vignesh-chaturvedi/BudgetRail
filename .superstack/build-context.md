@@ -1,6 +1,6 @@
 # Build Context
 
-> Phase 5 handoff updated 2026-08-10. Stop here for the repository push before Phase 6.
+> Phase 6 release-candidate handoff updated 2026-08-10. Stop here for the repository push before public deployment.
 
 ## Product
 
@@ -13,13 +13,13 @@
 
 | Layer               | Choice                                                     | Current status                                           |
 | ------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
-| Web                 | Next.js 16.2.12 + React 19 + TypeScript + Tailwind CSS 4   | adversarial judge console + security headers complete    |
+| Web                 | Next.js 16.2.12 + React 19 + TypeScript + Tailwind CSS 4   | standalone container release candidate complete          |
 | Solana client       | `@solana/kit` 6.9                                          | wallet, RPC queries, and native actions integrated       |
 | Allowance primitive | native Subscriptions Program + `@solana/subscriptions` 0.3 | create, inspect, and idempotent revoke proven            |
 | Payments            | x402 v2.20 `exact` + BudgetRail delegated payload adapter  | full HTTP 402 request/pay/retry/unlock loop proven       |
 | Identity            | ERC-8004 Solana Agent Registry via `8004-solana` 0.8.2     | identity registration and operational-wallet link proven |
 | Token               | Circle test USDC on devnet; disposable mint in proofs      | exact six-decimal model and balance checks complete      |
-| Testing             | Vitest + Surfpool 1.4                                      | 74 tests + five standalone phase proofs pass             |
+| Testing             | Vitest + Surfpool 1.4                                      | 91 tests + five standalone phase proofs pass             |
 | Package manager     | pnpm 11.20 via Corepack                                    | locked                                                   |
 | License             | MIT                                                        | added                                                    |
 
@@ -84,7 +84,19 @@ Use the audited native delegation program. No custom Anchor program is required:
 - Public diagnostics are bounded and redacted; cross-origin browser mutations are rejected; baseline security headers are enabled
 - Secret scan covers current source, Git history, and generated client artifacts with zero finding
 - Next.js 16.2.12 plus patched sharp/PostCSS/nanoid overrides clear all high and critical production advisories
-- Security review: B; quality review: A; no mainnet approval until Phase 6 deployment controls are complete
+- Security review: B+ for the disposable grant demo; quality review: A; mainnet remains unapproved pending a separate production-money review
+
+## Phase 6 release-candidate result
+
+- Portable linux/amd64 Node 22 standalone container for the embedded Surfpool judge runtime
+- Fail-closed readiness checks for container runtime, devnet CAIP-2, final HTTPS origin, one replica, and mainnet write lock
+- Liveness endpoint, dynamic same-origin agent card, public proof quotas, and canonical read-only mainnet USDC metadata
+- Architecture, updated threat model, deployment/rollback runbook, 75-second demo script, submission checklist, and HTML deployment review
+- Mainnet remains unapproved and impossible through current mutation paths; no transaction was signed or broadcast
+- External completion gates after this push: public HTTPS deployment, clean-browser acceptance, demo video, public devnet signatures, and final submission links
+- Final local gates: 14 test files / 91 tests, typecheck, lint, standalone build, release checker, and secret scan pass; production audit has zero high or critical advisories (one transitive moderate)
+- Final container: `linux/amd64`, Node 22, non-root `nextjs`, 98.4 MB; all eight readiness controls pass with mainnet writes locked
+- Exact container judge flow passes Identity → Pay → Challenge cap → Revoke → Prove; 375 px, 768 px, and 1280 px checks have no overflow or browser warnings/errors
 
 ## Progress
 
@@ -99,8 +111,9 @@ Use the audited native delegation program. No custom Anchor program is required:
 - [x] Phase 3 autonomous payment loop
 - [x] Phase 4 identity, receipts, and operator UX
 - [x] Phase 5 adversarial hardening
-- [ ] Phase 6 deployment and submission evidence
+- [x] Phase 6 release candidate and submission package
+- [ ] Public deployment and final live evidence links
 
 ## Next action
 
-Review and push this Phase 5 checkpoint to GitHub. Start Phase 6 only after the user confirms the push is complete.
+Review and push this Phase 6 release candidate to GitHub. Then deploy the exact SHA with `docs/DEPLOYMENT.md`, complete the clean-browser proof, and fill `docs/SUBMISSION_CHECKLIST.md`.

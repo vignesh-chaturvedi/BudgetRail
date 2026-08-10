@@ -16,6 +16,7 @@
     "phase3:local": "tsx scripts/phase3-local-proof.ts",
     "phase4:local": "tsx scripts/phase4-local-proof.ts",
     "phase5:local": "tsx scripts/phase5-adversarial-proof.ts",
+    "phase6:release": "tsx scripts/phase6-release-check.ts",
     "security:audit": "pnpm audit --prod --audit-level high",
     "security:secrets": "tsx scripts/security-scan.ts",
     "start": "next start",

@@ -234,7 +234,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 
 **Exit gate:** passed on 10 August. Valid, over-budget, expired, replayed, malformed, unavailable, and revoked paths are automated; denied on-chain probes preserve balances; repository/client secret scans are clean; the production dependency audit has zero critical and zero high advisory.
 
-### Phase 6 — deploy and submit (15–17 August)
+### Phase 6 — deploy and submit (15–17 August) — **release candidate ready**
 
 **Outcome:** public, reproducible grant deliverable.
 
@@ -245,6 +245,8 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 - Prepare Colosseum project link, repository link, AI receipt, transaction signatures, and grant update.
 
 **Exit gate:** final KPI achieved and evidence links work without local-machine access.
+
+**Current gate:** deployment code, release policy, runbook, architecture, threat model, demo script, and submission checklist are complete. Push this checkpoint, then add the public HTTPS URL, clean-browser verification, video, and final evidence links to close the external half of the exit gate.
 
 ### Stretch — recurring budgets (only after Phase 4 is stable)
 

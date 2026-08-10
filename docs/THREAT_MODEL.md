@@ -1,6 +1,6 @@
 # BudgetRail threat model
 
-Updated on 2026-08-10 for the Phase 5 devnet architecture.
+Updated on 2026-08-10 for the Phase 6 devnet grant-demo release candidate.
 
 ## Security objective
 
@@ -20,14 +20,14 @@ An autonomous agent may spend only the amount, token, network, recipient, and ti
 
 ## STRIDE matrix
 
-| Threat                 | Attack                                                    | Existing mitigation                                                                                      | Phase 6 action                                                             |
-| ---------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Spoofing               | malicious merchant, facilitator, or operational wallet    | exact origin/network/mint/recipient/fee-payer allow-lists; registry state read-back                      | bind production configuration to reviewed deployment values                |
-| Tampering              | mutate amount or requirements between challenge and retry | canonical requirement equality; signed payload; deterministic instruction construction                   | persist challenge records across production instances                      |
-| Repudiation            | deny payment or revocation                                | Solana signatures, registry receipts, policy activity, settlement response                               | retain structured production audit events without sensitive payloads       |
-| Information disclosure | RPC/API error contains a key or credential                | centralized redaction, fixed facilitator errors, no raw browser console errors, secret scan              | configure hosted log redaction and retention                               |
-| Denial of service      | repeatedly reset or run expensive proof endpoints         | same-origin browser mutation guard and operation locks                                                   | add per-session isolation, distributed rate limits, quotas, and timeouts   |
-| Elevation of privilege | bypass app policy to overspend                            | native fixed delegation enforces cap/expiry/delegate; facilitator allow-lists only Subscriptions Program | simulate every mainnet transaction and keep writes disabled until approval |
+| Threat                 | Attack                                                    | Existing mitigation                                                                                           | Phase 6 action                                                     |
+| ---------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Spoofing               | malicious merchant, facilitator, or operational wallet    | exact origin/network/mint/recipient/fee-payer allow-lists; registry read-back; dynamic same-origin agent card | require reviewed production identities before any mainnet proposal |
+| Tampering              | mutate amount or requirements between challenge and retry | canonical requirement equality; signed payload; configured public-origin guard; one-replica deployment gate   | durable transactional replay storage before horizontal scaling     |
+| Repudiation            | deny payment or revocation                                | Solana signatures, registry receipts, bounded activity records, settlement response                           | production audit retention before real-value use                   |
+| Information disclosure | RPC/API error contains a key or credential                | centralized redaction, fixed errors, no raw browser console errors, secret scan, public readiness allow-list  | configure hosted log retention and secret scanning                 |
+| Denial of service      | repeatedly reset or run expensive proof endpoints         | same-origin mutation guard, operation locks, bounded per-client quotas and in-memory key count, one replica   | distributed rate limits before horizontal scaling                  |
+| Elevation of privilege | bypass app policy to overspend                            | native fixed delegation; restricted top-level programs; fail-closed mainnet tripwire                          | separate funded-wallet review and simulate-first mainnet plan      |
 
 ## Invariants
 
@@ -48,11 +48,12 @@ An autonomous agent may spend only the amount, token, network, recipient, and ti
 | Public keys, balances, signatures      | public financial metadata  | Solana ledger and transient UI state       | ledger lifetime / browser session |
 | x402 challenge and payment fingerprint | security state             | in-memory merchant map                     | demo process lifetime             |
 | Policy decisions                       | non-secret audit data      | in-memory activity list                    | demo process lifetime             |
-| Hosted RPC/API credentials             | future critical credential | not currently required                     | must use deployment secret store  |
+| Hosted RPC/API credentials             | future critical credential | not required by the devnet grant demo      | must use deployment secret store  |
 
-## Explicit non-goals for Phase 5
+## Explicit non-goals for the Phase 6 grant demo
 
 - No mainnet execution or funded production key.
 - No custom on-chain program or upgrade authority.
-- No claim that the in-memory demo runtime is horizontally scalable.
+- No claim that the in-memory demo runtime is horizontally scalable; readiness enforces one replica.
 - No long-term storage of user identity or transaction history.
+- No production custody, funded server signer, or authenticated browser RPC credential.

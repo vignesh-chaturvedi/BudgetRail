@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BudgetRail Phase 6 Deployment Report</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #090b10;
+        --panel: #121620;
+        --line: #293142;
+        --text: #eef2f7;
+        --muted: #9ca8bb;
+        --green: #65d79b;
+        --amber: #f4c66c;
+        --red: #ff7b7b;
+        --blue: #8ab4ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 15% 0%, #16223a 0, transparent 34%),
+          var(--bg);
+        color: var(--text);
+        font:
+          15px/1.55 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 56px 0 80px;
+      }
+      header {
+        display: grid;
+        gap: 18px;
+        margin-bottom: 28px;
+      }
+      .eyebrow {
+        color: var(--blue);
+        font:
+          700 12px/1.2 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(34px, 6vw, 64px);
+        line-height: 1;
+        letter-spacing: -0.045em;
+      }
+      h2 {
+        margin: 0 0 14px;
+        font-size: 21px;
+      }
+      p {
+        margin: 0;
+      }
+      .lede {
+        max-width: 760px;
+        color: var(--muted);
+        font-size: 18px;
+      }
+      .status {
+        display: inline-flex;
+        width: max-content;
+        gap: 9px;
+        align-items: center;
+        padding: 8px 12px;
+        border: 1px solid #355d49;
+        border-radius: 999px;
+        background: #102219;
+        color: var(--green);
+        font-weight: 700;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 14px currentColor;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 16px;
+      }
+      .card {
+        grid-column: span 4;
+        padding: 22px;
+        background: color-mix(in srgb, var(--panel) 94%, transparent);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+      }
+      .wide {
+        grid-column: span 8;
+      }
+      .full {
+        grid-column: 1/-1;
+      }
+      .metric {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+      .label {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      ul {
+        margin: 12px 0 0;
+        padding-left: 19px;
+      }
+      li + li {
+        margin-top: 7px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 11px 8px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .pass {
+        color: var(--green);
+        font-weight: 750;
+      }
+      .hold {
+        color: var(--amber);
+        font-weight: 750;
+      }
+      .blocked {
+        color: var(--red);
+        font-weight: 750;
+      }
+      code {
+        color: #cad8f1;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .callout {
+        border-left: 3px solid var(--amber);
+        padding-left: 14px;
+        color: var(--muted);
+      }
+      footer {
+        margin-top: 26px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      @media (max-width: 760px) {
+        .card,
+        .wide {
+          grid-column: 1/-1;
+        }
+        main {
+          padding-top: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">BudgetRail / Phase 6 / 10 August 2026</div>
+        <h1>Release candidate,<br />mainnet locked.</h1>
+        <p class="lede">
+          A portable, reproducible grant-demo deployment with explicit
+          operational constraints, public health contracts, bounded proof
+          endpoints, and submission-ready evidence.
+        </p>
+        <div class="status">
+          <span class="dot"></span>Devnet grant-demo approved for deployment
+        </div>
+      </header>
+
+      <section class="grid" aria-label="Release summary">
+        <article class="card">
+          <div class="metric">A</div>
+          <div class="label">Code quality</div>
+        </article>
+        <article class="card">
+          <div class="metric">B+</div>
+          <div class="label">Grant-demo security</div>
+        </article>
+        <article class="card">
+          <div class="metric">91</div>
+          <div class="label">Passing tests</div>
+        </article>
+
+        <article class="card wide">
+          <h2>Launch decision</h2>
+          <p class="callout">
+            <strong
+              >Ship the devnet judge demo after the commit is pushed.</strong
+            >
+            Do not enable mainnet or multiple replicas. Public URL,
+            clean-browser proof, video, and final signatures are external gates
+            that can only be completed after hosting.
+          </p>
+        </article>
+        <article class="card">
+          <h2>Runtime</h2>
+          <ul>
+            <li>linux/amd64 Node 22 image</li>
+            <li>One long-lived container</li>
+            <li>Embedded Surfpool</li>
+            <li>Health + readiness routes</li>
+          </ul>
+        </article>
+
+        <article class="card full">
+          <h2>Release controls</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Control</th>
+                <th>Result</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Devnet network binding</td>
+                <td class="pass">Pass</td>
+                <td><code>app/lib/release/config.ts</code></td>
+              </tr>
+              <tr>
+                <td>Mainnet write tripwire</td>
+                <td class="pass">Locked</td>
+                <td>Readiness blocks mainnet mode or an enable request</td>
+              </tr>
+              <tr>
+                <td>Public endpoint quotas</td>
+                <td class="pass">Pass</td>
+                <td>
+                  Bounded per-client state, reset, pay, merchant, cap, and
+                  revoke calls
+                </td>
+              </tr>
+              <tr>
+                <td>Agent metadata origin</td>
+                <td class="pass">Pass</td>
+                <td>Dynamic <code>/.well-known/agent.json</code></td>
+              </tr>
+              <tr>
+                <td>Horizontal scaling</td>
+                <td class="hold">Held at 1 replica</td>
+                <td>
+                  Process-local signers and replay state are documented and
+                  enforced
+                </td>
+              </tr>
+              <tr>
+                <td>Public HTTPS verification</td>
+                <td class="hold">After push</td>
+                <td><code>docs/SUBMISSION_CHECKLIST.md</code></td>
+              </tr>
+              <tr>
+                <td>Mainnet deployment</td>
+                <td class="blocked">Not approved</td>
+                <td>
+                  Requires a separate funded-wallet and infrastructure review
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="card full">
+          <h2>Local verification record</h2>
+          <p>
+            14 test files / 91 tests, typecheck, lint, standalone production
+            build, release policy, and secret scan pass. Production audit has
+            zero high or critical advisories and one transitive moderate.
+            Mainnet transactions: zero.
+          </p>
+          <p>
+            The final 98.4 MB linux/amd64 image runs as non-root
+            <code>nextjs</code>, passes all eight readiness controls, and
+            completes Identity → Pay → Challenge cap → Revoke → Prove. The 375
+            px, 768 px, and 1280 px layouts have no horizontal overflow or
+            browser warnings/errors.
+          </p>
+        </article>
+
+        <article class="card full">
+          <h2>Verification commands</h2>
+          <p>
+            <code>pnpm run ci</code> · <code>pnpm phase5:local</code> ·
+            <code>pnpm security:secrets</code> ·
+            <code>pnpm security:audit</code> ·
+            <code>pnpm phase6:release</code> ·
+            <code>docker build --tag budgetrail:phase6 .</code>
+          </p>
+        </article>
+      </section>
+      <footer>
+        BudgetRail is approved here as a disposable Solana devnet grant demo,
+        not as a custody, production-money, or mainnet system.
+      </footer>
+    </main>
+  </body>
+</html>

@@ -1,7 +1,28 @@
 import type { Keypair, PublicKey } from "@solana/web3.js";
 
 export const BUDGETRAIL_AGENT_URI =
-  "https://raw.githubusercontent.com/vignesh-chaturvedi/BudgetRail/main/public/.well-known/agent.json";
+  "https://raw.githubusercontent.com/vignesh-chaturvedi/BudgetRail/main/public/agent-metadata.json";
+
+export function getBudgetRailAgentUri(env: NodeJS.ProcessEnv = process.env) {
+  const configured = env.BUDGETRAIL_PUBLIC_URL;
+  if (!configured) return BUDGETRAIL_AGENT_URI;
+  try {
+    const url = new URL(configured);
+    if (
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash
+    ) {
+      return BUDGETRAIL_AGENT_URI;
+    }
+    return `${url.origin}/.well-known/agent.json`;
+  } catch {
+    return BUDGETRAIL_AGENT_URI;
+  }
+}
 
 export type RegisteredAgentIdentity = {
   protocol: "ERC-8004 Solana Agent Registry";
@@ -59,7 +80,7 @@ export async function registerBudgetRailIdentity({
   registry,
   owner,
   operationalWallet,
-  metadataUri = BUDGETRAIL_AGENT_URI,
+  metadataUri = getBudgetRailAgentUri(),
 }: {
   registry: AgentRegistryPort;
   owner: PublicKey;

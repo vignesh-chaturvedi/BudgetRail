@@ -112,7 +112,7 @@ function scanText(
   return findings;
 }
 
-function trackedFiles() {
+function sourceFiles() {
   return git(["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
     .split("\0")
     .filter(Boolean)
@@ -167,8 +167,9 @@ function scanClientBundle() {
     );
 }
 
-const files = trackedFiles();
-const current = scanCurrent(files);
+const files = sourceFiles();
+const currentFiles = files.filter((path) => existsSync(path));
+const current = scanCurrent(currentFiles);
 const history = scanHistory(files);
 const clientBundle = scanClientBundle();
 const findings = [...current, ...history.findings, ...clientBundle];
@@ -190,7 +191,7 @@ if (findings.length > 0) {
     JSON.stringify(
       {
         status: "secret-scan-clean",
-        trackedFilesScanned: files.length,
+        currentFilesScanned: currentFiles.length,
         historyCommitsScanned: history.commits,
         clientArtifactsScanned: walk(".next/static").length,
         highConfidenceRules: rules.map((rule) => rule.id),

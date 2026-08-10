@@ -5,6 +5,8 @@ import {
   createDelegationNonce,
   formatUsdcAmount,
   getAllowanceStatus,
+  getUsdcMint,
+  MAINNET_USDC_MINT,
   parseUsdcAmount,
   toAllowanceView,
   validateAllowanceDraft,
@@ -31,6 +33,12 @@ describe("USDC amount precision", () => {
     "rejects unsafe amount %s",
     (input) => expect(() => parseUsdcAmount(input)).toThrow()
   );
+});
+
+describe("cluster token configuration", () => {
+  it("uses canonical mainnet USDC for read-only mainnet views", () => {
+    expect(getUsdcMint("mainnet")).toBe(MAINNET_USDC_MINT);
+  });
 });
 
 describe("allowance state", () => {

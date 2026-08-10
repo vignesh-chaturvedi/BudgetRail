@@ -5,6 +5,7 @@ import {
 import type { AgentPaymentEvent } from "../../../../packages/x402-adapter/src";
 import { safeErrorMessage } from "../../../../packages/security/src";
 import { rejectCrossOriginMutation } from "../../../lib/security/request";
+import { enforceRateLimit } from "../../../lib/security/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,12 @@ type StreamMessage =
 export async function POST(request: Request) {
   const rejected = rejectCrossOriginMutation(request);
   if (rejected) return rejected;
+  const rateLimited = enforceRateLimit(request, {
+    action: "agent-purchase",
+    limit: 8,
+    windowMs: 60_000,
+  });
+  if (rateLimited) return rateLimited;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({

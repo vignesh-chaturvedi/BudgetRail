@@ -26,6 +26,21 @@ describe("demo mutation origin guard", () => {
     ).toBeUndefined();
   });
 
+  it("uses the configured public origin behind an internal container proxy", () => {
+    expect(
+      rejectCrossOriginMutation(
+        new Request("http://0.0.0.0:3000/api/demo/reset", {
+          method: "POST",
+          headers: {
+            origin: "https://budgetrail.example",
+            "sec-fetch-site": "same-origin",
+          },
+        }),
+        "https://budgetrail.example"
+      )
+    ).toBeUndefined();
+  });
+
   it.each<[Record<string, string>]>([
     [
       {
@@ -45,5 +60,17 @@ describe("demo mutation origin guard", () => {
     await expect(response?.json()).resolves.toMatchObject({
       error: "CROSS_ORIGIN_MUTATION_BLOCKED",
     });
+  });
+
+  it("fails closed when the configured public URL is malformed", async () => {
+    const response = rejectCrossOriginMutation(
+      new Request("http://0.0.0.0:3000/api/demo/reset", {
+        method: "POST",
+        headers: { origin: "https://budgetrail.example" },
+      }),
+      "not-a-url"
+    );
+
+    expect(response?.status).toBe(403);
   });
 });

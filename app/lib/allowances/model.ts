@@ -9,6 +9,9 @@ export const MAX_U64 = 18_446_744_073_709_551_615n;
 export const DEVNET_USDC_MINT = address(
   "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
 );
+export const MAINNET_USDC_MINT = address(
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+);
 
 export const SUPPORTED_ALLOWANCE_CLUSTERS = ["devnet", "localnet"] as const;
 
@@ -76,6 +79,8 @@ export function getUsdcMint(cluster: ClusterMoniker): Address {
   if (cluster === "devnet" || cluster === "localnet") {
     return DEVNET_USDC_MINT;
   }
+
+  if (cluster === "mainnet") return MAINNET_USDC_MINT;
 
   return DEVNET_USDC_MINT;
 }

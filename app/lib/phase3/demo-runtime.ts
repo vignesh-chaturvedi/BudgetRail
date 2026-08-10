@@ -101,6 +101,14 @@ export type Phase4DemoState = {
   activities: DemoActivity[];
 };
 
+type ProgramDenialProof = {
+  verification: "rejected";
+  remainingBefore: string;
+  remainingAfter: string;
+  merchantBefore: string;
+  merchantAfter: string;
+};
+
 export class Phase3DemoRuntime {
   readonly merchant: BudgetRailMerchant;
 
@@ -144,6 +152,7 @@ export class Phase3DemoRuntime {
 
   private identity?: RegisteredAgentIdentity;
   private identityPromise?: Promise<RegisteredAgentIdentity>;
+  private overBudgetProgramProof?: Promise<ProgramDenialProof>;
   private readonly activities: DemoActivity[] = [];
   private lastKnownRemaining = ALLOWANCE_AMOUNT;
 
@@ -260,7 +269,7 @@ export class Phase3DemoRuntime {
         facilitator
       );
 
-      return new Phase3DemoRuntime(
+      const runtime = new Phase3DemoRuntime(
         surfnet,
         legacyOwner,
         legacyAgent,
@@ -277,6 +286,8 @@ export class Phase3DemoRuntime {
         facilitator,
         merchant
       );
+      await runtime.prepareOverBudgetProgramProof();
+      return runtime;
     } catch (error) {
       surfnet.stop();
       throw error;
@@ -421,7 +432,9 @@ export class Phase3DemoRuntime {
     return this.identityPromise;
   }
 
-  async proveOverBudgetGuardrail() {
+  async proveOverBudgetGuardrail({
+    freshProgramSimulation = false,
+  }: { freshProgramSimulation?: boolean } = {}) {
     const existing = this.activities.find(
       (activity) => activity.kind === "over-budget-denied"
     );
@@ -444,10 +457,16 @@ export class Phase3DemoRuntime {
       );
     }
 
-    const proof = await this.verifyProgramDenial(
-      paymentRequired,
-      "budgetrail-phase-5-over-budget"
-    );
+    const currentRemainingBefore = await this.remainingAllowance();
+    const currentMerchantBefore = await this.merchantBalance();
+    const proof = freshProgramSimulation
+      ? await this.verifyProgramDenial(
+          paymentRequired,
+          "budgetrail-phase-5-over-budget"
+        )
+      : await this.prepareOverBudgetProgramProof();
+    const currentRemainingAfter = await this.remainingAllowance();
+    const currentMerchantAfter = await this.merchantBalance();
     const activity: DemoActivity = {
       id: `over-budget-denied:${Date.now()}`,
       at: new Date().toISOString(),
@@ -459,7 +478,9 @@ export class Phase3DemoRuntime {
     };
     if (
       proof.remainingBefore !== proof.remainingAfter ||
-      proof.merchantBefore !== proof.merchantAfter
+      proof.merchantBefore !== proof.merchantAfter ||
+      currentRemainingBefore !== currentRemainingAfter ||
+      currentMerchantBefore !== currentMerchantAfter
     ) {
       throw new Error(
         "The rejected over-budget probe changed on-chain balances"
@@ -613,10 +634,7 @@ export class Phase3DemoRuntime {
       maxAmount: BigInt(paymentRequired.accepts[0]!.amount),
     });
     const remainingBefore = await this.remainingAllowance();
-    const merchantBefore = BigInt(
-      (await this.client.rpc.getTokenAccountBalance(this.merchantAta).send())
-        .value.amount
-    );
+    const merchantBefore = await this.merchantBalance();
     const { paymentPayload } = await buildDelegatedPaymentPayload({
       requirement,
       delegator: this.owner.address,
@@ -630,10 +648,7 @@ export class Phase3DemoRuntime {
       requirement
     );
     const remainingAfter = await this.remainingAllowance();
-    const merchantAfter = BigInt(
-      (await this.client.rpc.getTokenAccountBalance(this.merchantAta).send())
-        .value.amount
-    );
+    const merchantAfter = await this.merchantBalance();
     if (verification.isValid) {
       throw new Error("The native delegation unexpectedly accepted the probe");
     }
@@ -644,6 +659,24 @@ export class Phase3DemoRuntime {
       merchantBefore: merchantBefore.toString(),
       merchantAfter: merchantAfter.toString(),
     };
+  }
+
+  private merchantBalance() {
+    return this.client.rpc
+      .getTokenAccountBalance(this.merchantAta)
+      .send()
+      .then((balance) => BigInt(balance.value.amount));
+  }
+
+  private prepareOverBudgetProgramProof() {
+    this.overBudgetProgramProof ??= this.verifyProgramDenial(
+      this.probePaymentRequired(OVER_BUDGET_AMOUNT),
+      "budgetrail-phase-6-over-budget-preflight"
+    ).catch((error) => {
+      this.overBudgetProgramProof = undefined;
+      throw error;
+    });
+    return this.overBudgetProgramProof;
   }
 }
 

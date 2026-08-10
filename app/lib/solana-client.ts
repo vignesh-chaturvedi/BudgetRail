@@ -11,9 +11,17 @@ export const CLUSTERS: ClusterMoniker[] = [
 ];
 
 const CLUSTER_URLS: Record<ClusterMoniker, string> = {
-  devnet: "https://api.devnet.solana.com",
+  devnet:
+    process.env.NEXT_PUBLIC_SOLANA_CLUSTER === "devnet" &&
+    process.env.NEXT_PUBLIC_SOLANA_RPC_URL
+      ? process.env.NEXT_PUBLIC_SOLANA_RPC_URL
+      : "https://api.devnet.solana.com",
   testnet: "https://api.testnet.solana.com",
-  mainnet: "https://api.mainnet-beta.solana.com",
+  mainnet:
+    process.env.NEXT_PUBLIC_SOLANA_CLUSTER === "mainnet" &&
+    process.env.NEXT_PUBLIC_SOLANA_RPC_URL
+      ? process.env.NEXT_PUBLIC_SOLANA_RPC_URL
+      : "https://api.mainnet-beta.solana.com",
   localnet: "http://localhost:8899",
 };
 
