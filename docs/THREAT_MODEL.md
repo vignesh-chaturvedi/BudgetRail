@@ -41,7 +41,7 @@ An autonomous agent may spend only the amount, token, network, recipient, and ti
 7. Protected data is returned only with a successful x402 settlement receipt.
 8. External error text is not exposed without redaction.
 9. Mainnet canary writes cannot start without a clean committed tree, private mainnet RPC, exact acknowledgement, and exact bounded funding.
-10. A completed canary leaves no delegation or Subscription Authority and no token delegate on the owner account.
+10. A completed canary leaves no delegation, Subscription Authority, token delegate, or disposable USDC account.
 
 ## Data classification
 

@@ -29,7 +29,7 @@ The full genesis hash identifies the RPC cluster. The shorter value in the CAIP-
 - Every submitted transaction must reach `finalized`; signatures and finalized slots are written immediately to external evidence.
 - The canary revokes the delegation, proves a formerly valid payment now fails, closes the Subscription Authority, and verifies that the token delegate is cleared.
 - If the run aborts after delegation creation, the CLI attempts an emergency revoke before returning the error.
-- The recovery sweep is a distinct, explicitly approved action.
+- The recovery sweep is a distinct, explicitly approved action that also closes the disposable USDC accounts and returns their rent.
 
 ## External storage
 
@@ -106,7 +106,7 @@ pnpm phase7:canary report
 5. `revoke`: close the fixed delegation.
 6. No transaction: reject the formerly valid 0.10 USDC payment after revocation; balances remain unchanged.
 7. `closeAuthority`: close the Subscription Authority and clear the token delegate.
-8. Sweep transactions: return the remaining owner and merchant USDC and material SOL to the confirmed recovery wallet.
+8. Sweep transactions: return the remaining owner and merchant USDC, close both disposable token accounts to recover rent, and return material SOL to the confirmed recovery wallet.
 
 The exact number of sweep transactions depends on which balances remain. Negative tests intentionally have no transaction signature because rejection occurs before settlement.
 
@@ -122,7 +122,7 @@ The result is successful only when all of the following are true:
 - native simulation rejects 100,000 base units after revocation without changing balances;
 - the Subscription Authority is closed and the owner's token delegate is empty;
 - independent verification reproduces the terminal state;
-- the sweep leaves no canary USDC and at most 25,000 fee-reserve lamports on the facilitator.
+- the sweep closes both disposable USDC accounts, leaves no canary USDC, and leaves at most 25,000 fee-reserve lamports on the facilitator.
 
 ## Failure response
 

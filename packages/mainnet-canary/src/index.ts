@@ -75,6 +75,8 @@ export type CanaryTransactionName =
   | "closeAuthority"
   | "sweepOwnerUsdc"
   | "sweepMerchantUsdc"
+  | "closeOwnerAta"
+  | "closeMerchantAta"
   | "sweepOwnerSol"
   | "sweepFacilitatorSol";
 
@@ -145,6 +147,8 @@ export type CanaryEvidence = {
     delegationClosed: boolean;
     authorityClosed: boolean;
     tokenDelegateCleared: boolean;
+    ownerAtaClosed?: boolean;
+    merchantAtaClosed?: boolean;
     finalSlot?: string;
   };
   events: Array<{
@@ -437,6 +441,8 @@ ${balanceRow("After sweep", evidence.balances.afterSweep)}
 - Delegation closed: ${String(evidence.verification?.delegationClosed ?? false)}
 - Authority closed: ${String(evidence.verification?.authorityClosed ?? false)}
 - Token delegate cleared: ${String(evidence.verification?.tokenDelegateCleared ?? false)}
+- Owner USDC account closed: ${String(evidence.verification?.ownerAtaClosed ?? false)}
+- Merchant USDC account closed: ${String(evidence.verification?.merchantAtaClosed ?? false)}
 
 ## Event log
 

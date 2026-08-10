@@ -104,7 +104,7 @@ The isolated canary harness adds:
 - exact 0.10 USDC x402 settlement from a 0.20 USDC native fixed delegation;
 - policy and native-simulation rejection of a 0.30 USDC attempt with unchanged balances;
 - finalized revocation, post-revoke denial, authority closure, and token-delegate verification;
-- an independently replayable signature check, recovery sweep, and sanitized evidence report.
+- an independently replayable signature check, rent-recovering cleanup sweep, and sanitized evidence report.
 
 The hosted demo remains devnet-only. Follow [`docs/PHASE_7_MAINNET_CANARY.md`](./docs/PHASE_7_MAINNET_CANARY.md); do not fund a canary wallet or execute writes until its preflight passes.
 

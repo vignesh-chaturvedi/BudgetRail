@@ -1071,6 +1071,22 @@ async function verifyCanary(config: CanaryConfig) {
       .send();
     if (account.value) throw new Error("Subscription Authority is not closed.");
   }
+  if (evidence.status === "swept") {
+    for (const [label, value] of [
+      ["Owner", evidence.addresses.ownerAta],
+      ["Merchant", evidence.addresses.merchantAta],
+    ] as const) {
+      if (!value) throw new Error(`${label} USDC account was not recorded.`);
+      const account = await rpc
+        .getAccountInfo(address(value), {
+          commitment: "finalized",
+          encoding: "base64",
+        })
+        .send();
+      if (account.value)
+        throw new Error(`${label} USDC account is not closed.`);
+    }
+  }
   evidence.verification ??= {
     delegationMatched: false,
     paymentDeltaMatched: false,
@@ -1080,6 +1096,10 @@ async function verifyCanary(config: CanaryConfig) {
   };
   evidence.verification.delegationClosed = true;
   evidence.verification.authorityClosed = true;
+  if (evidence.status === "swept") {
+    evidence.verification.ownerAtaClosed = true;
+    evidence.verification.merchantAtaClosed = true;
+  }
   evidence.verification.finalSlot = maxSlot.toString();
   addCanaryEvent(
     evidence,
@@ -1120,6 +1140,15 @@ async function sweepCanary(config: CanaryConfig, signers: CanarySigners) {
   if (evidence.status !== "canary-passed") {
     throw new Error("Sweep requires a verified canary-passed state.");
   }
+  if (
+    !evidence.verification?.delegationMatched ||
+    !evidence.verification.paymentDeltaMatched ||
+    !evidence.verification.delegationClosed ||
+    !evidence.verification.authorityClosed ||
+    !evidence.verification.tokenDelegateCleared
+  ) {
+    throw new Error("Sweep requires every terminal canary invariant to pass.");
+  }
   if (!config.recoveryAddress) {
     throw new Error(
       "BUDGETRAIL_CANARY_RECOVERY_ADDRESS is required for sweep."
@@ -1136,6 +1165,10 @@ async function sweepCanary(config: CanaryConfig, signers: CanarySigners) {
   assertNetworkFacts(await networkFacts(rpc));
 
   const before = await balances(rpc, signers);
+  const [ownerToken, merchantToken] = await Promise.all([
+    tokenBalance(rpc, signers.owner.address),
+    tokenBalance(rpc, signers.merchant.address),
+  ]);
   const ownerClient = createCanaryClient(
     signers.owner,
     signers.facilitator,
@@ -1185,6 +1218,39 @@ async function sweepCanary(config: CanaryConfig, signers: CanarySigners) {
       result.context.signature
     );
   }
+
+  const closeOwnerAta = await ownerClient.token.instructions
+    .closeAccount({
+      account: ownerToken.ata,
+      destination: recovery,
+      owner: signers.owner,
+    })
+    .sendTransaction();
+  await recordTransaction(
+    config,
+    evidence,
+    rpc,
+    "closeOwnerAta",
+    closeOwnerAta.context.signature
+  );
+
+  const closeMerchantAta = await merchantClient.token.instructions
+    .closeAccount({
+      account: merchantToken.ata,
+      destination: recovery,
+      owner: signers.merchant,
+    })
+    .sendTransaction();
+  await recordTransaction(
+    config,
+    evidence,
+    rpc,
+    "closeMerchantAta",
+    closeMerchantAta.context.signature
+  );
+  evidence.verification.ownerAtaClosed = true;
+  evidence.verification.merchantAtaClosed = true;
+  writeEvidence(config, evidence);
 
   const ownerLamports = BigInt(
     (
@@ -1249,7 +1315,7 @@ async function sweepCanary(config: CanaryConfig, signers: CanarySigners) {
     evidence,
     "sweep",
     "pass",
-    `USDC and material SOL returned to ${recovery}; at most ${FACILITATOR_SWEEP_RESERVE_LAMPORTS} fee-reserve lamports remain.`
+    `USDC, token-account rent, and material SOL returned to ${recovery}; disposable token accounts were closed and at most ${FACILITATOR_SWEEP_RESERVE_LAMPORTS} fee-reserve lamports remain.`
   );
   writeEvidence(config, evidence);
   return evidence;
