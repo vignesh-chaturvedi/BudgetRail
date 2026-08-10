@@ -1,6 +1,6 @@
 # Build Context
 
-> Phase 4 handoff updated 2026-08-04. Stop here for the repository push before Phase 5.
+> Phase 5 handoff updated 2026-08-10. Stop here for the repository push before Phase 6.
 
 ## Product
 
@@ -13,13 +13,13 @@
 
 | Layer               | Choice                                                     | Current status                                           |
 | ------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
-| Web                 | Next.js 16 + React 19 + TypeScript + Tailwind CSS 4        | owner control plane + judge operator console complete    |
+| Web                 | Next.js 16.2.12 + React 19 + TypeScript + Tailwind CSS 4   | adversarial judge console + security headers complete    |
 | Solana client       | `@solana/kit` 6.9                                          | wallet, RPC queries, and native actions integrated       |
 | Allowance primitive | native Subscriptions Program + `@solana/subscriptions` 0.3 | create, inspect, and idempotent revoke proven            |
 | Payments            | x402 v2.20 `exact` + BudgetRail delegated payload adapter  | full HTTP 402 request/pay/retry/unlock loop proven       |
 | Identity            | ERC-8004 Solana Agent Registry via `8004-solana` 0.8.2     | identity registration and operational-wallet link proven |
 | Token               | Circle test USDC on devnet; disposable mint in proofs      | exact six-decimal model and balance checks complete      |
-| Testing             | Vitest + Surfpool 1.4                                      | 48 passing tests + four standalone phase proofs          |
+| Testing             | Vitest + Surfpool 1.4                                      | 74 tests + five standalone phase proofs pass             |
 | Package manager     | pnpm 11.20 via Corepack                                    | locked                                                   |
 | License             | MIT                                                        | added                                                    |
 
@@ -75,6 +75,17 @@ Use the audited native delegation program. No custom Anchor program is required:
 - Reset creates fresh disposable wallets, identity, mint, and 2.00 USDC rail for repeatable judging
 - Responsive review passed at 375 px, 768 px, and 1280 px with no overflow, undersized control, or browser warning/error
 
+## Phase 5 result
+
+- Standalone Surfpool proof covers valid settlement, 3.00 USDC over-budget rejection, time-traveled expiry, revocation, and unchanged-balance invariants
+- Judge mode exposes the headline Identity → Pay → Challenge cap → Revoke → Prove path
+- Policy tests require exact codes for wrong recipient, mint, network, fee payer, timeout, and malformed base-unit forms
+- Merchant and agent tests cover replay concurrency, unavailable services, RPC preparation failure, and unknown settlement outcome
+- Public diagnostics are bounded and redacted; cross-origin browser mutations are rejected; baseline security headers are enabled
+- Secret scan covers current source, Git history, and generated client artifacts with zero finding
+- Next.js 16.2.12 plus patched sharp/PostCSS/nanoid overrides clear all high and critical production advisories
+- Security review: B; quality review: A; no mainnet approval until Phase 6 deployment controls are complete
+
 ## Progress
 
 - [x] Idea validated
@@ -87,9 +98,9 @@ Use the audited native delegation program. No custom Anchor program is required:
 - [x] Phase 2 allowance control plane
 - [x] Phase 3 autonomous payment loop
 - [x] Phase 4 identity, receipts, and operator UX
-- [ ] Phase 5 adversarial hardening
+- [x] Phase 5 adversarial hardening
 - [ ] Phase 6 deployment and submission evidence
 
 ## Next action
 
-Review and push this Phase 4 checkpoint to GitHub. Start Phase 5 only after the user confirms the push is complete.
+Review and push this Phase 5 checkpoint to GitHub. Start Phase 6 only after the user confirms the push is complete.

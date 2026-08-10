@@ -72,14 +72,27 @@ describe("selectBudgetRailRequirement", () => {
     );
   });
 
-  it.each<[string, Partial<PaymentRequirements>]>([
-    ["network", { network: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp" }],
-    ["asset", { asset: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" }],
-    ["recipient", { payTo: "SysvarRent111111111111111111111111111111111" }],
-  ])("rejects the wrong %s", (_, overrides) => {
-    expect(() =>
-      selectBudgetRailRequirement(challenge(overrides), policy)
-    ).toThrow(PaymentPolicyError);
+  it.each<[string, Partial<PaymentRequirements>, string]>([
+    [
+      "network",
+      { network: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp" },
+      "NETWORK_NOT_ALLOWED",
+    ],
+    [
+      "asset",
+      { asset: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" },
+      "ASSET_NOT_ALLOWED",
+    ],
+    [
+      "recipient",
+      { payTo: "SysvarRent111111111111111111111111111111111" },
+      "RECIPIENT_NOT_ALLOWED",
+    ],
+  ])("rejects the wrong %s with a deterministic code", (_, overrides, code) => {
+    expectPolicyError(
+      () => selectBudgetRailRequirement(challenge(overrides), policy),
+      code
+    );
   });
 
   it("rejects a resource hosted outside the allow-list", () => {
@@ -106,10 +119,38 @@ describe("selectBudgetRailRequirement", () => {
     );
   });
 
-  it("rejects a malformed or non-positive amount", () => {
+  it.each(["0", "-1", "0.1", "1e5", "+100000", " 100000"])(
+    "rejects malformed or non-positive amount %s",
+    (amount) => {
+      expectPolicyError(
+        () => selectBudgetRailRequirement(challenge({ amount }), policy),
+        "INVALID_AMOUNT"
+      );
+    }
+  );
+
+  it("rejects an unsafe settlement timeout", () => {
     expectPolicyError(
-      () => selectBudgetRailRequirement(challenge({ amount: "0" }), policy),
-      "INVALID_AMOUNT"
+      () =>
+        selectBudgetRailRequirement(
+          challenge({ maxTimeoutSeconds: policy.maxTimeoutSeconds + 1 }),
+          policy
+        ),
+      "TIMEOUT_NOT_ALLOWED"
+    );
+  });
+
+  it("rejects a non-exact payment scheme", () => {
+    expectPolicyError(
+      () => selectBudgetRailRequirement(challenge({ scheme: "upto" }), policy),
+      "EXACT_SCHEME_REQUIRED"
+    );
+  });
+
+  it("rejects a malformed PaymentRequired document", () => {
+    expectPolicyError(
+      () => selectBudgetRailRequirement({ accepts: [] }, policy),
+      "MALFORMED_PAYMENT_REQUIRED"
     );
   });
 });

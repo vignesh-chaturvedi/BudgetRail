@@ -103,7 +103,6 @@ export function SubscribeCard({
         setOptimisticActive(true);
         toast.info("Already subscribed");
       } else {
-        console.error("Subscribe failed:", err);
         toast.error(parseTransactionError(err));
       }
     } finally {
@@ -126,7 +125,6 @@ export function SubscribeCard({
       revalidate();
       toast.success("Subscription resumed");
     } catch (err) {
-      console.error("Resume failed:", err);
       toast.error(parseTransactionError(err));
     } finally {
       setBusy(false);

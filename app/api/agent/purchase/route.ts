@@ -3,6 +3,8 @@ import {
   type Phase3DemoResult,
 } from "../../../lib/phase3/demo-runtime";
 import type { AgentPaymentEvent } from "../../../../packages/x402-adapter/src";
+import { safeErrorMessage } from "../../../../packages/security/src";
+import { rejectCrossOriginMutation } from "../../../lib/security/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +15,9 @@ type StreamMessage =
   | { type: "error"; error: { code: string; message: string } };
 
 export async function POST(request: Request) {
+  const rejected = rejectCrossOriginMutation(request);
+  if (rejected) return rejected;
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -49,9 +54,10 @@ export async function POST(request: Request) {
                 ? String(error.code)
                 : "PHASE_3_DEMO_FAILED",
             message:
-              error instanceof Error
-                ? error.message
-                : "The autonomous payment proof failed.",
+              safeErrorMessage(
+                error,
+                "The autonomous payment proof failed."
+              ),
           },
         });
       } finally {

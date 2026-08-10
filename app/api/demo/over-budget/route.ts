@@ -1,22 +1,27 @@
 import { getPhase3DemoRuntime } from "../../../lib/phase3/demo-runtime";
 import { safeErrorMessage } from "../../../../packages/security/src";
+import { rejectCrossOriginMutation } from "../../../lib/security/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function POST(request: Request) {
+  const rejected = rejectCrossOriginMutation(request);
+  if (rejected) return rejected;
+
   try {
     const demo = await getPhase3DemoRuntime();
+    await demo.proveOverBudgetGuardrail();
     return Response.json(await demo.getPhase4State(), {
       headers: { "cache-control": "no-store" },
     });
   } catch (error) {
     return Response.json(
       {
-        error: "DEMO_STATE_UNAVAILABLE",
+        error: "OVER_BUDGET_PROOF_FAILED",
         message: safeErrorMessage(
           error,
-          "The judge console could not load its Solana state."
+          "The 3.00 USDC guardrail proof could not complete."
         ),
       },
       { status: 503 }

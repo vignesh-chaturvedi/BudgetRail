@@ -11,7 +11,13 @@ import { formatUsdcAmount } from "../../lib/allowances/model";
 import { ellipsify } from "../../lib/explorer";
 
 type ConsoleStatus =
-  "loading" | "ready" | "purchasing" | "revoking" | "resetting" | "error";
+  | "loading"
+  | "ready"
+  | "purchasing"
+  | "probing"
+  | "revoking"
+  | "resetting"
+  | "error";
 
 type Notice = {
   tone: "success" | "denied" | "error";
@@ -147,6 +153,31 @@ export function OperatorConsole() {
     }
   };
 
+  const proveOverBudget = async () => {
+    setStatus("probing");
+    setNotice(undefined);
+    setError(undefined);
+    setStage(undefined);
+    try {
+      const response = await fetch("/api/demo/over-budget", {
+        method: "POST",
+      });
+      const body = await readBody(response);
+      if (!response.ok) throw new Error(errorMessage(body));
+      setState(body as Phase4DemoState);
+      setNotice({
+        tone: "denied",
+        title: "3.00 USDC request blocked",
+        message:
+          "Production policy rejected it before signing, and restricted Solana simulation independently confirmed the native 2.00 USDC rail would fail with balances unchanged.",
+      });
+      setStatus("ready");
+    } catch (caught) {
+      setError(errorMessage(caught));
+      setStatus("ready");
+    }
+  };
+
   const reset = async () => {
     setStatus("resetting");
     setNotice(undefined);
@@ -208,12 +239,17 @@ export function OperatorConsole() {
     );
   }
 
-  const busy = ["purchasing", "revoking", "resetting"].includes(status);
+  const busy = ["purchasing", "probing", "revoking", "resetting"].includes(
+    status
+  );
   const paid = state.activities.some(
     (activity) => activity.kind === "payment-settled"
   );
   const denied = state.activities.some(
     (activity) => activity.kind === "payment-denied"
+  );
+  const overBudgetDenied = state.activities.some(
+    (activity) => activity.kind === "over-budget-denied"
   );
 
   return (
@@ -225,7 +261,7 @@ export function OperatorConsole() {
         <div className="max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
-              Phase 4 judge mode
+              Phase 5 adversarial proof
             </span>
             <span className="rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 font-mono text-xs text-warning-foreground">
               isolated devnet fork
@@ -235,12 +271,11 @@ export function OperatorConsole() {
             id="operator-console-title"
             className="mt-5 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl"
           >
-            One screen. Every actor and receipt.
+            Prove the rail—including failure.
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted sm:text-base sm:leading-7">
-            BudgetRail registers the buyer through Solana Agent Registry, links
-            its payment wallet, and keeps the owner, merchant, budget, and
-            policy trail readable without narration.
+            Settle a valid payment, challenge the cap, revoke access, and prove
+            the next payment fails—all against the same isolated Solana rail.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -258,6 +293,19 @@ export function OperatorConsole() {
                 : paid
                   ? "Run another 0.10 payment"
                   : "Run 0.10 USDC task"}
+          </button>
+          <button
+            type="button"
+            onClick={proveOverBudget}
+            disabled={busy || state.railStatus === "revoked"}
+            aria-busy={status === "probing"}
+            className="min-h-11 rounded-lg border border-destructive/40 bg-destructive/5 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-destructive disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
+          >
+            {status === "probing"
+              ? "Testing 3.00 cap…"
+              : overBudgetDenied
+                ? "3.00 denial proven"
+                : "Prove 3.00 denial"}
           </button>
           <button
             type="button"
@@ -312,6 +360,7 @@ export function OperatorConsole() {
           <DemoGuide
             identityReady={state.identity.verified}
             paid={paid}
+            overBudgetDenied={overBudgetDenied}
             revoked={state.railStatus === "revoked"}
             denied={denied}
           />
@@ -468,24 +517,31 @@ function BudgetMetric({
 function DemoGuide({
   identityReady,
   paid,
+  overBudgetDenied,
   revoked,
   denied,
 }: {
   identityReady: boolean;
   paid: boolean;
+  overBudgetDenied: boolean;
   revoked: boolean;
   denied: boolean;
 }) {
   const steps = [
     [identityReady, "Identity", "Agent registered and wallet linked"],
     [paid, "Pay", "Agent buys one 0.10 USDC result"],
+    [
+      overBudgetDenied,
+      "Challenge cap",
+      "3.00 USDC fails policy and program simulation",
+    ],
     [revoked, "Revoke", "Owner closes the spending rail"],
     [denied, "Prove", "Next agent payment fails closed"],
   ] as const;
   return (
     <article className="rounded-xl border border-border bg-card p-5 sm:p-6">
       <p className="text-xs font-semibold uppercase tracking-widest text-muted">
-        Four-step judge path
+        Five-step judge path
       </p>
       <ol className="mt-4 space-y-1">
         {steps.map(([done, title, detail], index) => (
@@ -713,7 +769,7 @@ function ConsoleSkeleton() {
   return (
     <section
       className="mt-16 border-t border-border pt-12 sm:mt-20 sm:pt-16"
-      aria-label="Starting Phase 4 judge mode"
+      aria-label="Starting Phase 5 adversarial proof mode"
       role="status"
     >
       <div className="h-7 w-40 animate-pulse rounded bg-border motion-reduce:animate-none" />

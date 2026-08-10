@@ -85,10 +85,25 @@ export async function runAutonomousPaymentLoop({
   };
 
   emit("requesting", "Requesting the protected spend-safety brief.");
-  const challengeResponse = await fetchFn(resourceUrl, {
-    method: "GET",
-    cache: "no-store",
-  });
+  let challengeResponse: Response;
+  try {
+    challengeResponse = await fetchFn(resourceUrl, {
+      method: "GET",
+      cache: "no-store",
+    });
+  } catch {
+    throw new AgentPaymentError(
+      "MERCHANT_UNAVAILABLE",
+      "The merchant could not be reached. No payment was prepared."
+    );
+  }
+  if (challengeResponse.status >= 500) {
+    throw new AgentPaymentError(
+      "MERCHANT_UNAVAILABLE",
+      `The merchant is temporarily unavailable (HTTP ${challengeResponse.status}).`,
+      challengeResponse.status
+    );
+  }
   if (challengeResponse.status !== 402) {
     throw new AgentPaymentError(
       "CHALLENGE_EXPECTED",
@@ -127,27 +142,46 @@ export async function runAutonomousPaymentLoop({
     "signing",
     "Constructing the fixed-delegation payment deterministically."
   );
-  const { paymentPayload } = await buildDelegatedPaymentPayload({
-    requirement,
-    delegator,
-    delegatee,
-    delegationNonce,
-    rpcUrl,
-    memo,
-  });
+  let paymentPayload: Awaited<
+    ReturnType<typeof buildDelegatedPaymentPayload>
+  >["paymentPayload"];
+  try {
+    ({ paymentPayload } = await buildDelegatedPaymentPayload({
+      requirement,
+      delegator,
+      delegatee,
+      delegationNonce,
+      rpcUrl,
+      memo,
+    }));
+  } catch {
+    throw new AgentPaymentError(
+      "RPC_UNAVAILABLE",
+      "Solana RPC could not prepare a fresh transaction. Nothing was submitted."
+    );
+  }
 
   emit("retrying", "Retrying the same resource with PAYMENT-SIGNATURE.");
   emit(
     "settling",
     "Merchant is verifying the payment and submitting it to Solana."
   );
-  const paidResponse = await fetchFn(resourceUrl, {
-    method: "GET",
-    cache: "no-store",
-    headers: {
-      [PAYMENT_SIGNATURE_HEADER]: encodePaymentSignatureHeader(paymentPayload),
-    },
-  });
+  let paidResponse: Response;
+  try {
+    paidResponse = await fetchFn(resourceUrl, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        [PAYMENT_SIGNATURE_HEADER]:
+          encodePaymentSignatureHeader(paymentPayload),
+      },
+    });
+  } catch {
+    throw new AgentPaymentError(
+      "PAYMENT_OUTCOME_UNKNOWN",
+      "The paid retry lost contact with the merchant. Do not resubmit automatically; reconcile the signed payment first."
+    );
+  }
   if (!paidResponse.ok) {
     const failure = await readJson(paidResponse);
     throw new AgentPaymentError(
@@ -166,7 +200,15 @@ export async function runAutonomousPaymentLoop({
       "The merchant unlocked the resource without a PAYMENT-RESPONSE receipt."
     );
   }
-  const settlement = decodePaymentResponseHeader(settlementHeader);
+  let settlement: SettleResponse;
+  try {
+    settlement = decodePaymentResponseHeader(settlementHeader);
+  } catch {
+    throw new AgentPaymentError(
+      "SETTLEMENT_RECEIPT_INVALID",
+      "The merchant returned an invalid settlement receipt."
+    );
+  }
   if (!settlement.success) {
     throw new AgentPaymentError(
       "SETTLEMENT_FAILED",
@@ -174,7 +216,15 @@ export async function runAutonomousPaymentLoop({
     );
   }
 
-  const artifact = (await paidResponse.json()) as ProtectedResearchArtifact;
+  let artifact: ProtectedResearchArtifact;
+  try {
+    artifact = (await paidResponse.json()) as ProtectedResearchArtifact;
+  } catch {
+    throw new AgentPaymentError(
+      "PROTECTED_ARTIFACT_INVALID",
+      "The merchant response was not valid JSON."
+    );
+  }
   if (artifact.kind !== "budgetrail.spend-safety-brief") {
     throw new AgentPaymentError(
       "PROTECTED_ARTIFACT_INVALID",

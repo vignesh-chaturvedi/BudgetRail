@@ -222,7 +222,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 
 **Exit gate:** passed on an isolated Surfpool devnet fork. A new viewer can follow the registered identity → linked wallet → 0.10 USDC payment → owner revocation → denied payment story from one responsive console, with receipts and policy decisions visible without narration.
 
-### Phase 5 — adversarial proof matrix (13–14 August)
+### Phase 5 — adversarial proof matrix (13–14 August) — **complete**
 
 **Outcome:** BudgetRail proves the guardrails, not only the happy path.
 
@@ -232,7 +232,7 @@ If the spike cannot meet the pass condition by the end of 5 August, pause UI wor
 - Run dependency and repository secret scans.
 - Capture evidence for the three headline outcomes.
 
-**Exit gate:** all critical cases pass automatically; no high-severity security finding remains.
+**Exit gate:** passed on 10 August. Valid, over-budget, expired, replayed, malformed, unavailable, and revoked paths are automated; denied on-chain probes preserve balances; repository/client secret scans are clean; the production dependency audit has zero critical and zero high advisory.
 
 ### Phase 6 — deploy and submit (15–17 August)
 

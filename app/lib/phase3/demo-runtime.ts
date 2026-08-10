@@ -9,14 +9,19 @@ import {
 import { findFixedDelegationPda } from "@solana/subscriptions";
 import { Surfnet } from "@solana/surfpool";
 import { Keypair } from "@solana/web3.js";
+import type { PaymentRequired } from "@x402/core/types";
 import { toFacilitatorSvmSigner } from "@x402/svm";
 import { ExactSvmScheme } from "@x402/svm/exact/facilitator";
 import {
   BUDGETRAIL_FACILITATOR_OPTIONS,
   BudgetRailMerchant,
+  PaymentPolicyError,
   SOLANA_DEVNET_CAIP2,
+  buildDelegatedPaymentPayload,
   runAutonomousPaymentLoop,
+  selectBudgetRailRequirement,
   type AgentPaymentEvent,
+  type BudgetRailFacilitator,
   type MerchantResult,
 } from "../../../packages/x402-adapter/src";
 import {
@@ -24,12 +29,14 @@ import {
   registerBudgetRailIdentity,
   type RegisteredAgentIdentity,
 } from "../../../packages/agent-registry/src";
+import { safeErrorMessage } from "../../../packages/security/src";
 import { createSubscriptionsClient } from "../subscriptions-client";
 
 const REMOTE_DEVNET_RPC = "https://api.devnet.solana.com";
 const TOKEN_DECIMALS = 6;
 const ALLOWANCE_AMOUNT = 2_000_000n;
 const PAYMENT_AMOUNT = 100_000n;
+const OVER_BUDGET_AMOUNT = 3_000_000n;
 const DELEGATION_NONCE = 3_000_000_000_000_003n;
 
 export type Phase3DemoResult = {
@@ -62,6 +69,8 @@ export type DemoActivity = {
     | "identity-registered"
     | "wallet-linked"
     | "payment-settled"
+    | "over-budget-denied"
+    | "expired-payment-denied"
     | "payment-denied"
     | "allowance-revoked";
   decision: "control" | "allowed" | "denied";
@@ -116,6 +125,8 @@ export class Phase3DemoRuntime {
     >[0],
     private readonly client: ReturnType<typeof createSubscriptionsClient>,
     private readonly seedSignature: string,
+    private readonly expiryTs: bigint,
+    private readonly facilitator: BudgetRailFacilitator,
     merchant: BudgetRailMerchant
   ) {
     this.merchant = merchant;
@@ -203,11 +214,12 @@ export class Phase3DemoRuntime {
           userAta: ownerAta,
         })
         .sendTransaction();
+      const expiryTs = BigInt(Math.floor(Date.now() / 1000) + 86_400);
       const seeded = await client.subscriptions.instructions
         .createFixedDelegation({
           amount: ALLOWANCE_AMOUNT,
           delegatee: agent.address,
-          expiryTs: BigInt(Math.floor(Date.now() / 1000) + 86_400),
+          expiryTs,
           nonce: DELEGATION_NONCE,
           tokenMint: mint.address,
         })
@@ -261,6 +273,8 @@ export class Phase3DemoRuntime {
         merchantAta,
         client,
         seeded.context.signature,
+        expiryTs,
+        facilitator,
         merchant
       );
     } catch (error) {
@@ -354,10 +368,10 @@ export class Phase3DemoRuntime {
         kind: "payment-denied",
         decision: "denied",
         title: "Payment denied",
-        detail:
-          error instanceof Error
-            ? error.message
-            : "The payment failed closed before the resource was unlocked.",
+        detail: safeErrorMessage(
+          error,
+          "The payment failed closed before the resource was unlocked."
+        ),
       });
       throw error;
     }
@@ -405,6 +419,79 @@ export class Phase3DemoRuntime {
       throw error;
     });
     return this.identityPromise;
+  }
+
+  async proveOverBudgetGuardrail() {
+    const existing = this.activities.find(
+      (activity) => activity.kind === "over-budget-denied"
+    );
+    if (existing) return existing;
+
+    const paymentRequired = this.probePaymentRequired(OVER_BUDGET_AMOUNT);
+    let policyCode = "";
+    try {
+      selectBudgetRailRequirement(paymentRequired, {
+        ...this.paymentPolicy(),
+        maxAmount: PAYMENT_AMOUNT,
+      });
+    } catch (error) {
+      if (!(error instanceof PaymentPolicyError)) throw error;
+      policyCode = error.code;
+    }
+    if (policyCode !== "AMOUNT_EXCEEDS_REQUEST_LIMIT") {
+      throw new Error(
+        "The production policy did not reject the 3.00 USDC probe"
+      );
+    }
+
+    const proof = await this.verifyProgramDenial(
+      paymentRequired,
+      "budgetrail-phase-5-over-budget"
+    );
+    const activity: DemoActivity = {
+      id: `over-budget-denied:${Date.now()}`,
+      at: new Date().toISOString(),
+      kind: "over-budget-denied",
+      decision: "denied",
+      title: "3.00 USDC over-budget probe denied",
+      detail:
+        "Production policy blocked the request before signing; restricted Solana simulation independently confirmed the native 2.00 USDC rail would reject it with balances unchanged.",
+    };
+    if (
+      proof.remainingBefore !== proof.remainingAfter ||
+      proof.merchantBefore !== proof.merchantAfter
+    ) {
+      throw new Error(
+        "The rejected over-budget probe changed on-chain balances"
+      );
+    }
+    this.activities.unshift(activity);
+    return activity;
+  }
+
+  async proveExpiredGuardrail() {
+    this.surfnet.timeTravelToTimestamp(Number(this.expiryTs + 1n) * 1_000);
+    const proof = await this.verifyProgramDenial(
+      this.probePaymentRequired(PAYMENT_AMOUNT),
+      "budgetrail-phase-5-expired"
+    );
+    if (
+      proof.remainingBefore !== proof.remainingAfter ||
+      proof.merchantBefore !== proof.merchantAfter
+    ) {
+      throw new Error("The rejected expired probe changed on-chain balances");
+    }
+    const activity: DemoActivity = {
+      id: `expired-payment-denied:${Date.now()}`,
+      at: new Date().toISOString(),
+      kind: "expired-payment-denied",
+      decision: "denied",
+      title: "Expired allowance payment denied",
+      detail:
+        "Surfpool advanced past the delegation expiry; restricted Solana simulation rejected the payment with balances unchanged.",
+    };
+    this.activities.unshift(activity);
+    return { activity, ...proof };
   }
 
   async getPhase4State(): Promise<Phase4DemoState> {
@@ -481,6 +568,82 @@ export class Phase3DemoRuntime {
       );
     }
     return delegation.data.amount;
+  }
+
+  private paymentPolicy() {
+    return {
+      network: SOLANA_DEVNET_CAIP2,
+      asset: this.mint.address,
+      payTo: this.merchantSigner.address,
+      maxAmount: PAYMENT_AMOUNT,
+      maxTimeoutSeconds: 120,
+      allowedResourceOrigins: ["https://merchant.budgetrail.test"],
+      allowedFeePayers: [this.facilitatorSigner.address],
+    } as const;
+  }
+
+  private probePaymentRequired(amount: bigint): PaymentRequired {
+    return {
+      x402Version: 2,
+      resource: {
+        url: "https://merchant.budgetrail.test/api/research",
+        description: "BudgetRail Phase 5 adversarial probe",
+        mimeType: "application/json",
+      },
+      accepts: [
+        {
+          scheme: "exact",
+          network: SOLANA_DEVNET_CAIP2,
+          asset: this.mint.address,
+          amount: amount.toString(),
+          payTo: this.merchantSigner.address,
+          maxTimeoutSeconds: 60,
+          extra: { feePayer: this.facilitatorSigner.address },
+        },
+      ],
+    };
+  }
+
+  private async verifyProgramDenial(
+    paymentRequired: PaymentRequired,
+    memo: string
+  ) {
+    const requirement = selectBudgetRailRequirement(paymentRequired, {
+      ...this.paymentPolicy(),
+      maxAmount: BigInt(paymentRequired.accepts[0]!.amount),
+    });
+    const remainingBefore = await this.remainingAllowance();
+    const merchantBefore = BigInt(
+      (await this.client.rpc.getTokenAccountBalance(this.merchantAta).send())
+        .value.amount
+    );
+    const { paymentPayload } = await buildDelegatedPaymentPayload({
+      requirement,
+      delegator: this.owner.address,
+      delegatee: this.agent,
+      delegationNonce: DELEGATION_NONCE,
+      rpcUrl: this.surfnet.rpcUrl,
+      memo,
+    });
+    const verification = await this.facilitator.verify(
+      paymentPayload,
+      requirement
+    );
+    const remainingAfter = await this.remainingAllowance();
+    const merchantAfter = BigInt(
+      (await this.client.rpc.getTokenAccountBalance(this.merchantAta).send())
+        .value.amount
+    );
+    if (verification.isValid) {
+      throw new Error("The native delegation unexpectedly accepted the probe");
+    }
+    return {
+      verification: "rejected" as const,
+      remainingBefore: remainingBefore.toString(),
+      remainingAfter: remainingAfter.toString(),
+      merchantBefore: merchantBefore.toString(),
+      merchantAfter: merchantAfter.toString(),
+    };
   }
 }
 

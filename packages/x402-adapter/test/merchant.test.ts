@@ -229,4 +229,83 @@ describe("BudgetRailMerchant", () => {
     expect(first.body).toMatchObject({ error: "FACILITATOR_UNAVAILABLE" });
     expect(retry.status).toBe(200);
   });
+
+  it("does not expose facilitator verification diagnostics", async () => {
+    const facilitator = createFacilitator({
+      verify: {
+        isValid: false,
+        invalidReason: "RPC_ERROR",
+        invalidMessage: "PRIVATE_KEY=must-not-leak",
+      },
+    });
+    const merchant = createMerchant(facilitator);
+    const { requirement } = await issueChallenge(merchant);
+    const result = await merchant.handleRequest({
+      resourceUrl,
+      paymentSignature: paymentHeader(requirement),
+    });
+
+    expect(result.status).toBe(402);
+    expect(result.body).toMatchObject({ error: "PAYMENT_INVALID" });
+    expect(JSON.stringify(result.body)).not.toContain("must-not-leak");
+  });
+
+  it("consumes a challenge when settlement outcome is unknown", async () => {
+    const facilitator = createFacilitator();
+    facilitator.settle = vi
+      .fn()
+      .mockRejectedValue(new Error("Authorization: Bearer must-not-leak"));
+    const merchant = createMerchant(facilitator);
+    const { requirement } = await issueChallenge(merchant);
+    const header = paymentHeader(requirement);
+
+    const first = await merchant.handleRequest({
+      resourceUrl,
+      paymentSignature: header,
+    });
+    const retry = await merchant.handleRequest({
+      resourceUrl,
+      paymentSignature: header,
+    });
+
+    expect(first.status).toBe(502);
+    expect(first.body).toMatchObject({ error: "SETTLEMENT_OUTCOME_UNKNOWN" });
+    expect(JSON.stringify(first.body)).not.toContain("must-not-leak");
+    expect(retry.status).toBe(409);
+    expect(facilitator.settle).toHaveBeenCalledOnce();
+  });
+
+  it("returns a fixed failure when settlement is rejected", async () => {
+    const facilitator = createFacilitator({
+      settle: {
+        success: false,
+        network: SOLANA_DEVNET_CAIP2,
+        transaction: "",
+        errorReason: "RPC_ERROR",
+        errorMessage: "api-key=must-not-leak",
+      },
+    });
+    const merchant = createMerchant(facilitator);
+    const { requirement } = await issueChallenge(merchant);
+    const result = await merchant.handleRequest({
+      resourceUrl,
+      paymentSignature: paymentHeader(requirement),
+    });
+
+    expect(result.status).toBe(402);
+    expect(result.body).toMatchObject({ error: "SETTLEMENT_FAILED" });
+    expect(JSON.stringify(result.body)).not.toContain("must-not-leak");
+  });
+
+  it("rejects malformed payment headers before verification", async () => {
+    const facilitator = createFacilitator();
+    const result = await createMerchant(facilitator).handleRequest({
+      resourceUrl,
+      paymentSignature: "not-x402",
+    });
+
+    expect(result.status).toBe(400);
+    expect(result.body).toMatchObject({ error: "MALFORMED_PAYMENT_SIGNATURE" });
+    expect(facilitator.verify).not.toHaveBeenCalled();
+  });
 });

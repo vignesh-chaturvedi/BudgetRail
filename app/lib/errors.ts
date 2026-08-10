@@ -3,6 +3,7 @@ import {
   SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
 } from "@solana/kit";
 import { getSubscriptionsErrorMessage } from "@solana/subscriptions";
+import { redactSensitiveText } from "../../packages/security/src";
 
 export function parseTransactionError(err: unknown): string {
   if (err instanceof Error && err.message.includes("User rejected")) {
@@ -21,7 +22,7 @@ export function parseTransactionError(err: unknown): string {
     }
   }
 
-  const message = getDeepestMessage(err);
+  const message = redactSensitiveText(getDeepestMessage(err));
   return message.length > 200 ? `${message.slice(0, 200)}...` : message;
 }
 

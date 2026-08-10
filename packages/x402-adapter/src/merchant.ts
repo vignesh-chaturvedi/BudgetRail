@@ -198,9 +198,7 @@ export class BudgetRailMerchant {
       return this.failure(
         402,
         "PAYMENT_INVALID",
-        verification.invalidMessage ??
-          verification.invalidReason ??
-          "The facilitator rejected the payment."
+        "The facilitator rejected the payment during restricted Solana simulation."
       );
     }
 
@@ -229,9 +227,7 @@ export class BudgetRailMerchant {
       return this.failure(
         402,
         "SETTLEMENT_FAILED",
-        settlement.errorMessage ??
-          settlement.errorReason ??
-          "The payment could not be settled."
+        "The payment could not be confirmed on Solana. No resource was released."
       );
     }
 

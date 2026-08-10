@@ -4,9 +4,9 @@ BudgetRail gives autonomous agents capped, expiring, and instantly revocable tok
 
 ## Build status
 
-**Phases 1–4 are complete. Phase 5 has not started.**
+**Phases 1–5 are complete. Phase 6 has not started.**
 
-The repository now contains an owner control plane for native fixed USDC delegations, a complete autonomous x402 request → challenge → pay → retry → unlock loop, and a narration-free operator console backed by a verifiable Agent Registry identity. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
+The repository now contains an owner control plane for native fixed USDC delegations, a complete autonomous x402 request → challenge → pay → retry → unlock loop, a verifiable Agent Registry identity, and an adversarial judge console that proves success, over-budget denial, expiry, and revocation. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
 
 Mainnet is intentionally out of scope until the product and safety matrix are complete.
 
@@ -67,9 +67,22 @@ The judge-facing console now adds:
 
 See [`docs/PHASE_4_EVIDENCE.md`](./docs/PHASE_4_EVIDENCE.md) for the reproducible identity → pay → revoke → prove workflow.
 
+## Phase 5 adversarial hardening
+
+The automated safety matrix now proves:
+
+- valid 0.10 USDC settlement;
+- production-policy and native-program rejection of a 3.00 USDC request against a 2.00 rail;
+- expired and revoked delegation rejection with unchanged balances;
+- exact failure codes for wrong recipient, mint, network, timeout, and malformed amounts;
+- replay, concurrent retry, merchant, RPC, facilitator, and unknown-settlement behavior;
+- redacted diagnostics, clean repository/client-bundle secret scans, and zero high/critical production dependency advisory.
+
+See [`docs/PHASE_5_EVIDENCE.md`](./docs/PHASE_5_EVIDENCE.md), [`docs/THREAT_MODEL.md`](./docs/THREAT_MODEL.md), and [`docs/PHASE_5_SECURITY_REVIEW.html`](./docs/PHASE_5_SECURITY_REVIEW.html).
+
 ## Run locally
 
-Requirements: Node.js 18 or newer and Corepack.
+Requirements: Node.js 20.9 or newer and Corepack.
 
 ```bash
 corepack enable pnpm
@@ -81,6 +94,9 @@ pnpm phase1:local
 pnpm phase2:local
 pnpm phase3:local
 pnpm phase4:local
+pnpm phase5:local
+pnpm security:secrets
+pnpm security:audit
 pnpm dev
 ```
 
@@ -94,7 +110,10 @@ The `phase*:local` commands start and stop isolated Surfpool networks. `phase1:d
 - `scripts/phase2-local-proof.ts` — reproducible allowance create/inspect/revoke proof
 - `scripts/phase3-local-proof.ts` — complete autonomous purchase and replay-rejection proof
 - `scripts/phase4-local-proof.ts` — identity, wallet-link, payment, revoke, and fail-closed proof
+- `scripts/phase5-adversarial-proof.ts` — valid, over-budget, expired, and revoked invariant proof
+- `scripts/security-scan.ts` — current-source, Git-history, and client-bundle credential scan
 - `packages/agent-registry/` — isolated adapter for the ERC-8004 Solana Agent Registry SDK
+- `packages/security/` — bounded redaction for public diagnostics and activity records
 - `app/components/allowances/` — owner allowance control plane
 - `app/components/phase4/` — judge-facing operator console and receipt timeline
 - `app/lib/allowances/` — exact amount model, persistence, errors, and native actions

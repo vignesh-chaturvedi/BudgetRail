@@ -3,6 +3,7 @@ import {
   merchantResultToResponse,
 } from "../../../lib/phase3/demo-runtime";
 import { PAYMENT_SIGNATURE_HEADER } from "../../../../packages/x402-adapter/src";
+import { safeErrorMessage } from "../../../../packages/security/src";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,10 +24,10 @@ export async function GET(request: Request) {
     return Response.json(
       {
         error: "DEMO_RUNTIME_UNAVAILABLE",
-        message:
-          error instanceof Error
-            ? error.message
-            : "The local Solana proof runtime could not start.",
+        message: safeErrorMessage(
+          error,
+          "The local Solana proof runtime could not start."
+        ),
       },
       { status: 503 }
     );

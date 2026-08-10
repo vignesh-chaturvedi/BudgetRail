@@ -129,11 +129,15 @@ export function classifyAllowanceError(error: unknown): AllowanceError {
 }
 
 function deepestMessage(error: unknown): string {
-  let message = error instanceof Error ? error.message : String(error);
+  let message = redactSensitiveText(
+    error instanceof Error ? error.message : String(error)
+  );
   let current = error;
   while (current instanceof Error && current.cause) {
     current = current.cause;
-    if (current instanceof Error) message = current.message;
+    if (current instanceof Error)
+      message = redactSensitiveText(current.message);
   }
   return message || "Unknown transaction error.";
 }
+import { redactSensitiveText } from "../../../packages/security/src";

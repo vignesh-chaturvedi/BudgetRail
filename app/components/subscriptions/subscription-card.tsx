@@ -46,7 +46,6 @@ export function SubscriptionCard({
       revalidate();
       toast.success(successMessage);
     } catch (err) {
-      console.error(`${successMessage} failed:`, err);
       toast.error(parseTransactionError(err));
     } finally {
       setBusy(false);

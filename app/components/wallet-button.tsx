@@ -6,6 +6,7 @@ import { useBalance } from "../lib/hooks/use-balance";
 import { lamportsToSolString } from "../lib/lamports";
 import { ellipsify } from "../lib/explorer";
 import { useCluster } from "./cluster-context";
+import { safeErrorMessage } from "../../packages/security/src";
 
 export function WalletButton() {
   const { connectors, connect, disconnect, wallet, status, error } =
@@ -112,7 +113,7 @@ export function WalletButton() {
             )}
             {error != null && (
               <p className="mt-2 text-xs text-destructive">
-                {error instanceof Error ? error.message : String(error)}
+                {safeErrorMessage(error, "The wallet could not connect.")}
               </p>
             )}
           </div>

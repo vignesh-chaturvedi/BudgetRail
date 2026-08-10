@@ -60,7 +60,6 @@ export function CreateDemoPlan() {
       mutate((key) => Array.isArray(key) && key[0] === "plans");
       toast.success("Demo plan created — you can subscribe now");
     } catch (err) {
-      console.error("Create demo plan failed:", err);
       toast.error(parseTransactionError(err));
     } finally {
       setBusy(false);
