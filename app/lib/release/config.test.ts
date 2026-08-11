@@ -1,5 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { evaluateReleaseReadiness, publicReadiness } from "./config";
+import {
+  evaluateReleaseReadiness,
+  publicReadiness,
+  resolveBuildSha,
+} from "./config";
+
+describe("build provenance", () => {
+  const base: NodeJS.ProcessEnv = { NODE_ENV: "test" };
+
+  it("prefers the explicit override", () => {
+    expect(
+      resolveBuildSha({
+        ...base,
+        BUDGETRAIL_BUILD_SHA: "abc1234",
+        RENDER_GIT_COMMIT: "def5678",
+      })
+    ).toBe("abc1234");
+  });
+
+  it.each([
+    ["RENDER_GIT_COMMIT", "render99"],
+    ["RAILWAY_GIT_COMMIT_SHA", "railway9"],
+    ["VERCEL_GIT_COMMIT_SHA", "vercel99"],
+  ])("falls back to the %s the platform injects", (key, value) => {
+    expect(resolveBuildSha({ ...base, [key]: value })).toBe(value);
+  });
+
+  it("does not report a stale override when it is blank", () => {
+    expect(
+      resolveBuildSha({
+        ...base,
+        BUDGETRAIL_BUILD_SHA: "   ",
+        RENDER_GIT_COMMIT: "render99",
+      })
+    ).toBe("render99");
+  });
+
+  it("reports development when nothing is set", () => {
+    expect(resolveBuildSha(base)).toBe("development");
+  });
+});
 
 const safeGrantEnvironment: NodeJS.ProcessEnv = {
   NODE_ENV: "test",

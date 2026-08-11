@@ -1,3 +1,5 @@
+import { resolveBuildSha } from "../../lib/release/config";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -7,7 +9,7 @@ export async function GET() {
       status: "ok",
       service: "budgetrail",
       runtime: "nodejs",
-      buildSha: process.env.BUDGETRAIL_BUILD_SHA ?? "development",
+      buildSha: resolveBuildSha(),
     },
     { headers: { "cache-control": "no-store" } }
   );

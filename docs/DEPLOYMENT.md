@@ -23,10 +23,17 @@ Prefer a host that polls the health check continuously. Render restarts an insta
 | `BUDGETRAIL_X402_NETWORK`           | `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` | Solana devnet CAIP-2 identifier               |
 | `BUDGETRAIL_MAX_PAYMENT_BASE_UNITS` | `100000`                                  | 0.10 USDC                                     |
 | `BUDGETRAIL_ENABLE_MAINNET_WRITES`  | `false`                                   | readiness fails if true                       |
-| `BUDGETRAIL_BUILD_SHA`              | deployed Git SHA                          | public, non-secret provenance                 |
+| `BUDGETRAIL_BUILD_SHA`              | leave unset                               | override only; see below                      |
 | `BUDGETRAIL_SLOT_TIME_MS`           | `400`                                     | decides how long a rail survives — see below  |
 | `BUDGETRAIL_BLOCK_PRODUCTION_MODE`  | `transaction`                             | one block per transaction, not per tick       |
 | `BUDGETRAIL_DEVNET_RPC_URL`         | dedicated devnet endpoint                 | **secret** — set in the host's env store only |
+
+Leave `BUDGETRAIL_BUILD_SHA` unset. `/api/health` and `/api/readiness` fall back
+to whatever commit the platform injects — `RENDER_GIT_COMMIT`,
+`RAILWAY_GIT_COMMIT_SHA`, or `VERCEL_GIT_COMMIT_SHA` — which moves with every
+deploy. A hand-set value silently wins over all of them and keeps reporting the
+commit it was typed for, so the service claims provenance for code it is no
+longer running. Set it only on a host that injects nothing.
 
 `BUDGETRAIL_DEVNET_RPC_URL` may contain an API key. Set it through the hosting
 platform's secret store; never commit it, never put it in `.env.example`, and

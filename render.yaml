@@ -45,5 +45,7 @@ services:
       # committed. Never expose this as a NEXT_PUBLIC_* variable.
       - key: BUDGETRAIL_DEVNET_RPC_URL
         sync: false
-      - key: BUDGETRAIL_BUILD_SHA
-        sync: false
+      # BUDGETRAIL_BUILD_SHA is deliberately unset. Render injects
+      # RENDER_GIT_COMMIT, which moves with each deploy; a hand-set value goes
+      # stale and makes the service report provenance for a commit it is no
+      # longer running.

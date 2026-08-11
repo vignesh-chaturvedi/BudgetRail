@@ -27,6 +27,25 @@ function deploymentMode(value: string | undefined): DeploymentMode {
     : "local";
 }
 
+/**
+ * Commit actually serving the request.
+ *
+ * `BUDGETRAIL_BUILD_SHA` is set by hand, so it goes stale the moment the host
+ * redeploys on its own and the service then reports provenance for a commit it
+ * is no longer running. Platform-injected values are preferred because they
+ * move with the deploy; the manual variable stays as an override for hosts that
+ * inject nothing.
+ */
+export function resolveBuildSha(env: NodeJS.ProcessEnv = process.env) {
+  return (
+    env.BUDGETRAIL_BUILD_SHA?.trim() ||
+    env.RENDER_GIT_COMMIT?.trim() ||
+    env.RAILWAY_GIT_COMMIT_SHA?.trim() ||
+    env.VERCEL_GIT_COMMIT_SHA?.trim() ||
+    "development"
+  );
+}
+
 function isHttpsOrigin(value: string | undefined) {
   if (!value) return false;
   try {
@@ -159,7 +178,7 @@ export function evaluateReleaseReadiness(
     cluster,
     mainnetWritesLocked: true,
     publicUrl,
-    buildSha: env.BUDGETRAIL_BUILD_SHA ?? "development",
+    buildSha: resolveBuildSha(env),
     checks,
   };
 }
