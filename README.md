@@ -1,4 +1,22 @@
+<div align="center">
+
+<img src="public/logo-mark.svg" alt="" width="76" height="76">
+
 # BudgetRail
+
+**Give an autonomous agent a spending limit it cannot exceed.**
+
+Capped, expiring, and instantly revocable USDC authority for x402 payments on
+Solana — built on the native Subscriptions Program, with no custom onchain code.
+
+[Live demo](https://budgetrail.onrender.com) ·
+[Architecture](docs/ARCHITECTURE.md) ·
+[Threat model](docs/THREAT_MODEL.md) ·
+[Mainnet evidence](docs/PHASE_7_MAINNET_EVIDENCE.md)
+
+</div>
+
+---
 
 BudgetRail gives autonomous agents capped, expiring, and instantly revocable token-spending authority for x402 payments on Solana.
 
@@ -8,7 +26,9 @@ BudgetRail gives autonomous agents capped, expiring, and instantly revocable tok
 
 The repository now contains an owner control plane for native fixed USDC delegations, a complete autonomous x402 request → challenge → pay → retry → unlock loop, a verifiable Agent Registry identity, and an adversarial judge console that proves success, over-budget denial, expiry, and revocation. All phase proofs pass on an isolated Surfpool devnet fork without a custom onchain program.
 
-The codebase includes a portable long-running Node container, fail-closed release readiness, public endpoint quotas, dynamic agent metadata, a deployment/demo/submission kit, and a separate local mainnet-canary harness. Public hosting, clean-browser acceptance, the video, and final live evidence links are completed after the release commit is pushed.
+The codebase includes a portable long-running Node container, fail-closed release readiness, public endpoint quotas, dynamic agent metadata, a deployment/demo/submission kit, and a separate local mainnet-canary harness.
+
+The demo is live at **[budgetrail.onrender.com](https://budgetrail.onrender.com)**, where the full Identity → Pay → Challenge cap → Revoke → Prove loop runs with no wallet, login, or local setup. Every signature it produces is verifiable in Solana Explorer against the deployment's own read-only ledger view. The recorded video and the final evidence links remain outstanding.
 
 Mainnet writes remain intentionally locked in the hosted application. The only mainnet write path is the local Phase 7 CLI: it pins canonical USDC and the native Subscriptions Program, enforces an exact 0.20 USDC exposure, requires a private RPC and explicit acknowledgement, records finalized evidence, revokes authority, and sweeps every disposable balance.
 
