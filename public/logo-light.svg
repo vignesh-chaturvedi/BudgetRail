@@ -1,0 +1,19 @@
+<svg width="182" height="40" viewBox="0 0 182 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">BudgetRail</title>
+  <defs>
+    <linearGradient id="brGrad" x1="4" y1="8" x2="27" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="0.55" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(0 4)" fill="none" stroke="url(#brGrad)" stroke-width="3.4" stroke-linecap="round">
+    <path d="M11 27 L7 13"/>
+    <path d="M21 27 L25 13"/>
+    <path d="M5 7 L27 7"/>
+  </g>
+  <!-- For light backgrounds, where currentColor is unavailable (GitHub README). -->
+  <text x="44" y="28" fill="#0F172A"
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    font-size="25" font-weight="700" letter-spacing="-0.6">BudgetRail</text>
+</svg>

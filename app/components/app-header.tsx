@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "./brand-mark";
 import { ThemeToggle } from "./theme-toggle";
 import { ClusterSelect } from "./cluster-select";
 import { WalletButton } from "./wallet-button";
@@ -11,9 +12,7 @@ export function AppHeader() {
           href="/"
           className="flex min-h-10 items-center gap-2 rounded-lg focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary font-mono text-xs font-bold text-primary-foreground">
-            BR
-          </span>
+          <BrandMark size={32} className="shrink-0" />
           <span>
             <span className="block text-sm font-semibold tracking-tight">
               BudgetRail

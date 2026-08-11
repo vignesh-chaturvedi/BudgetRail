@@ -1,7 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
   <title id="title">BudgetRail Agent</title>
-  <desc id="desc">A dark rail monogram representing bounded autonomous payments.</desc>
-  <rect width="512" height="512" rx="112" fill="#171717"/>
-  <path d="M142 118h139c74 0 119 32 119 91 0 37-19 63-53 78 45 13 68 42 68 87 0 67-49 102-137 102H142V118Zm81 68v71h50c31 0 47-12 47-36 0-23-16-35-48-35h-49Zm0 134v88h57c37 0 55-15 55-44 0-30-19-44-57-44h-55Z" fill="#fafafa"/>
-  <path d="M96 144v224" stroke="#4ade80" stroke-width="20" stroke-linecap="round"/>
+  <desc id="desc">Two rails meeting a buffer stop, for an agent whose spending authority is capped, expiring, and revocable.</desc>
+  <defs>
+    <linearGradient id="brGrad" x1="4" y1="8" x2="27" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="0.55" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0B1120"/>
+  <g transform="translate(64 64) scale(12)" fill="none" stroke="url(#brGrad)" stroke-width="3.4" stroke-linecap="round">
+    <path d="M11 27 L7 13"/>
+    <path d="M21 27 L25 13"/>
+    <path d="M5 7 L27 7"/>
+  </g>
 </svg>
