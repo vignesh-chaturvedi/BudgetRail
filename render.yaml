@@ -1,0 +1,49 @@
+# Render Blueprint for the BudgetRail grant demo.
+#
+# One Docker web service, one instance. The rail's Surfpool ledger, disposable
+# signers, and replay store are all process-local, so this must never scale
+# horizontally.
+#
+# healthCheckPath is /api/readiness rather than /api/health on purpose: health
+# answers from static state and keeps returning 200 after the rail has stopped
+# serving reads, which is the failure a reviewer would actually hit. Render
+# polls this continuously and restarts the instance after 60s of failures, so an
+# exhausted rail recovers without intervention.
+services:
+  - name: budgetrail
+    type: web
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/readiness
+    autoDeployTrigger: commit
+    numInstances: 1
+    envVars:
+      - key: BUDGETRAIL_DEPLOYMENT_MODE
+        value: grant-demo
+      - key: BUDGETRAIL_RUNTIME
+        value: container
+      - key: BUDGETRAIL_REPLICA_COUNT
+        value: "1"
+      - key: BUDGETRAIL_X402_NETWORK
+        value: solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1
+      - key: BUDGETRAIL_MAX_PAYMENT_BASE_UNITS
+        value: "100000"
+      - key: BUDGETRAIL_ENABLE_MAINNET_WRITES
+        value: "false"
+      - key: BUDGETRAIL_SLOT_TIME_MS
+        value: "400"
+      - key: BUDGETRAIL_BLOCK_PRODUCTION_MODE
+        value: transaction
+      # Must match the service's final HTTPS origin, with no trailing path.
+      # Readiness fails closed if it is missing or not a bare HTTPS origin.
+      - key: BUDGETRAIL_PUBLIC_URL
+        value: https://budgetrail.onrender.com
+      # Secret: carries an API key, so it is entered in the dashboard and never
+      # committed. Never expose this as a NEXT_PUBLIC_* variable.
+      - key: BUDGETRAIL_DEVNET_RPC_URL
+        sync: false
+      - key: BUDGETRAIL_BUILD_SHA
+        sync: false

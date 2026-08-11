@@ -6,7 +6,11 @@ This runbook publishes the devnet grant demo. It does **not** authorize or enabl
 
 Use a Linux x64 platform that runs the included Docker image as one long-lived Node 22 container with persistent process lifetime. Do not use arm64: Surfpool 1.4 publishes a Linux x64 native binary, but no Linux arm64 binary. Do not use a serverless/edge function target for the judge demo: the embedded Surfpool runtime and replay store are process-local. Node 22.13+ is required by pinned pnpm 11.20.
 
-Recommended shape: one container, 2 vCPU, at least 2 GB RAM, port `3000`, HTTPS termination at the hosting proxy, and no autoscaling beyond one replica.
+Recommended shape: one container, port `3000`, HTTPS termination at the hosting proxy, and no autoscaling beyond one replica.
+
+Measured footprint: **76 MB idle, ~150 MB peak** with a rail seeded and the full judge flow running, settling to ~100 MB after a reset. A 512 MB instance is comfortable; the rail is a single embedded ledger, not a database, so there is no reason to buy 2 GB. CPU matters more than memory during the ~14 s rail seed — a fractional-CPU instance will seed more slowly than the figures in the container rehearsal below.
+
+Prefer a host that polls the health check continuously. Render restarts an instance after 60 s of failed checks, so an exhausted rail recovers on its own; Railway only checks at deploy time, so there the slot budget and the console's Reset are the only recovery paths.
 
 ## Required environment
 
