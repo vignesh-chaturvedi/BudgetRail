@@ -4,6 +4,7 @@ import {
 } from "../../../lib/phase3/demo-runtime";
 import type { AgentPaymentEvent } from "../../../../packages/x402-adapter/src";
 import { safeErrorMessage } from "../../../../packages/security/src";
+import { resolveMerchantResourceUrl } from "../../../lib/phase3/merchant-url";
 import { rejectCrossOriginMutation } from "../../../lib/security/request";
 import { enforceRateLimit } from "../../../lib/security/rate-limit";
 
@@ -42,10 +43,7 @@ export async function POST(request: Request) {
           },
         });
         const demo = await getPhase3DemoRuntime();
-        const resourceUrl = new URL(
-          "/api/merchant/research",
-          request.url
-        ).toString();
+        const resourceUrl = resolveMerchantResourceUrl();
         const result = await demo.runPurchase({
           resourceUrl,
           fetchFn: fetch,
