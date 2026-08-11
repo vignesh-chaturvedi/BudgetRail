@@ -30,9 +30,14 @@ import {
   type RegisteredAgentIdentity,
 } from "../../../packages/agent-registry/src";
 import { safeErrorMessage } from "../../../packages/security/src";
+import {
+  resolveBlockProductionMode,
+  resolveDevnetForkRpcUrl,
+  resolveSlotTimeMs,
+} from "../ledger/rail-config";
+import { LEDGER_RPC_PATH } from "../ledger/rpc-proxy";
 import { createSubscriptionsClient } from "../subscriptions-client";
 
-const REMOTE_DEVNET_RPC = "https://api.devnet.solana.com";
 const TOKEN_DECIMALS = 6;
 const ALLOWANCE_AMOUNT = 2_000_000n;
 const PAYMENT_AMOUNT = 100_000n;
@@ -82,7 +87,12 @@ export type DemoActivity = {
 export type Phase4DemoState = {
   execution: "isolated-surfpool-devnet-fork";
   cluster: "devnet";
-  rpcUrl: string;
+  /**
+   * Same-origin path serving this rail's ledger read-only. The browser resolves
+   * it against the public origin so Solana Explorer can verify signatures; the
+   * container-local Surfpool address is never exposed.
+   */
+  ledgerRpcPath: string;
   railStatus: "active" | "revoked";
   identity: RegisteredAgentIdentity;
   participants: {
@@ -150,6 +160,14 @@ export class Phase3DemoRuntime {
     });
   }
 
+  /**
+   * Loopback address of this rail's Surfpool ledger. Only the read-only
+   * `/api/ledger/rpc` proxy may forward to it; it is never sent to a browser.
+   */
+  get ledgerRpcUrl() {
+    return this.surfnet.rpcUrl;
+  }
+
   private identity?: RegisteredAgentIdentity;
   private identityPromise?: Promise<RegisteredAgentIdentity>;
   private overBudgetProgramProof?: Promise<ProgramDenialProof>;
@@ -159,7 +177,9 @@ export class Phase3DemoRuntime {
   static async create() {
     const surfnet = Surfnet.startWithConfig({
       offline: false,
-      remoteRpcUrl: REMOTE_DEVNET_RPC,
+      remoteRpcUrl: resolveDevnetForkRpcUrl(),
+      blockProductionMode: resolveBlockProductionMode(),
+      slotTimeMs: resolveSlotTimeMs(),
     });
 
     try {
@@ -527,7 +547,7 @@ export class Phase3DemoRuntime {
     return {
       execution: "isolated-surfpool-devnet-fork",
       cluster: "devnet",
-      rpcUrl: this.surfnet.rpcUrl,
+      ledgerRpcPath: LEDGER_RPC_PATH,
       railStatus: account.value ? "active" : "revoked",
       identity,
       participants: {
@@ -694,6 +714,15 @@ declare global {
 
 export function getPhase3DemoRuntime() {
   globalThis.__budgetRailPhase3Runtime ??= Phase3DemoRuntime.create();
+  return globalThis.__budgetRailPhase3Runtime;
+}
+
+/**
+ * Returns the rail only if one is already running. The public ledger endpoint
+ * uses this instead of {@link getPhase3DemoRuntime} so an anonymous request can
+ * never trigger a Surfpool boot.
+ */
+export function peekPhase3DemoRuntime() {
   return globalThis.__budgetRailPhase3Runtime;
 }
 

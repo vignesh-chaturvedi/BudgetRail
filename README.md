@@ -88,6 +88,11 @@ The deployment package adds:
 
 - a linux/amd64 Node 22 standalone Docker image for the embedded Surfpool runtime;
 - `/api/health` and fail-closed `/api/readiness` contracts;
+- `/api/ledger/rpc`, a read-only public view of the judge ledger so every
+  Explorer link in the console resolves for a remote reviewer;
+- a slot-budget-aware rail configuration and a readiness probe that fails closed
+  on an exhausted ledger, because Surfpool 1.4 stops answering state reads after
+  roughly 1,050 produced slots while still reporting `getHealth: ok`;
 - strict devnet, HTTPS-origin, one-replica, and mainnet-write-lock checks;
 - bounded quotas for every public proof action;
 - deployment, rollback, architecture, demo, and submission documentation;
@@ -126,6 +131,7 @@ pnpm phase3:local
 pnpm phase4:local
 pnpm phase5:local
 pnpm phase6:release
+pnpm ledger:budget
 pnpm phase7:canary inspect
 pnpm security:secrets
 pnpm security:audit
@@ -152,6 +158,8 @@ The `phase*:local` commands start and stop isolated Surfpool networks. `phase1:d
 - `app/components/allowances/` — owner allowance control plane
 - `app/components/phase4/` — judge-facing operator console and receipt timeline
 - `app/lib/release/` — hosted-demo readiness and mainnet tripwire
+- `app/lib/ledger/` — rail startup configuration, ledger liveness probe, and read-only method/origin/load policy for the public ledger view
+- `scripts/ledger-slot-budget-probe.ts` — measures how long a Surfpool rail keeps answering; re-run after any Surfpool upgrade
 - `Dockerfile` — portable single-container judge deployment
 - `app/lib/allowances/` — exact amount model, persistence, errors, and native actions
 - `PROJECT_PLAN.html` — interactive project assessment dashboard

@@ -34,8 +34,10 @@ Fill the link placeholders only after deploying the pushed Phase 6 commit.
 - [ ] `/api/health` returns `200`
 - [ ] `/api/readiness` reports `ready`, `devnet`, and `mainnetWritesLocked: true`
 - [ ] `/.well-known/agent.json` uses the live origin
+- [ ] `GET /api/ledger/rpc` describes the read-only policy; `sendTransaction`, `requestAirdrop`, `surfnet_*`, and `getLargestAccounts` are all refused
 - [ ] Identity → Pay → Challenge cap → Revoke → Prove completes
 - [ ] Explorer/evidence links open without authentication or local files
+- [ ] A signature link decodes in Solana Explorer as a Subscriptions instruction, and the allowance address renders as a `Fixed Delegation` with its cap, delegatee, and expiry (open in a fresh tab)
 - [ ] 375 px, 768 px, and desktop layouts have no overflow
 - [ ] Browser console has no warnings/errors
 - [ ] Repository setup works from a fresh clone

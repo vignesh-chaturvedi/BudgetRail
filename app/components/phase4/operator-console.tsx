@@ -333,7 +333,7 @@ export function OperatorConsole() {
           address={state.identity.asset}
           copy={() => copy("identity", state.identity.asset)}
           copied={copied === "identity"}
-          href={explorerAddress(state.identity.asset, state.rpcUrl)}
+          href={explorerAddress(state.identity.asset, state.ledgerRpcPath)}
         />
         <IdentityCard
           label="Operational wallet"
@@ -378,7 +378,10 @@ export function OperatorConsole() {
           {(stage || notice || error) && (
             <RunFeedback stage={stage} notice={notice} error={error} />
           )}
-          <ActivityLog activities={state.activities} rpcUrl={state.rpcUrl} />
+          <ActivityLog
+            activities={state.activities}
+            ledgerRpcPath={state.ledgerRpcPath}
+          />
         </div>
       </div>
     </section>
@@ -686,10 +689,10 @@ function RunFeedback({
 
 function ActivityLog({
   activities,
-  rpcUrl,
+  ledgerRpcPath,
 }: {
   activities: DemoActivity[];
-  rpcUrl: string;
+  ledgerRpcPath: string;
 }) {
   return (
     <article className="min-w-0 rounded-xl border border-border bg-card">
@@ -699,8 +702,12 @@ function ActivityLog({
         </p>
         <h3 className="mt-2 text-xl font-semibold">Receipts and decisions</h3>
         <p className="mt-2 text-xs leading-5 text-muted">
-          Signatures open in Solana Explorer against this live isolated ledger.
-          Policy denials remain readable even when no transaction was signed.
+          Signatures open in Solana Explorer against this live isolated ledger,
+          which this deployment serves read-only at{" "}
+          <code className="break-all font-mono text-[0.7rem]">
+            {ledgerRpcPath}
+          </code>
+          . Policy denials remain readable even when no transaction was signed.
         </p>
       </div>
       {activities.length === 0 ? (
@@ -729,7 +736,7 @@ function ActivityLog({
               </div>
               {activity.signature ? (
                 <a
-                  href={explorerTransaction(activity.signature, rpcUrl)}
+                  href={explorerTransaction(activity.signature, ledgerRpcPath)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex min-h-10 items-center justify-self-start rounded-lg border border-border px-3 text-xs font-semibold transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none sm:justify-self-end"
@@ -836,17 +843,26 @@ function errorMessage(value: unknown) {
   return "The request could not be completed.";
 }
 
-function explorerTransaction(signature: string, rpcUrl: string) {
-  return explorerUrl(`/tx/${signature}`, rpcUrl);
+function explorerTransaction(signature: string, ledgerRpcPath: string) {
+  return explorerUrl(`/tx/${signature}`, ledgerRpcPath);
 }
 
-function explorerAddress(address: string, rpcUrl: string) {
-  return explorerUrl(`/address/${address}`, rpcUrl);
+function explorerAddress(address: string, ledgerRpcPath: string) {
+  return explorerUrl(`/address/${address}`, ledgerRpcPath);
 }
 
-function explorerUrl(path: string, rpcUrl: string) {
+function explorerUrl(path: string, ledgerRpcPath: string) {
   const url = new URL(path, "https://explorer.solana.com");
   url.searchParams.set("cluster", "custom");
-  url.searchParams.set("customUrl", rpcUrl);
+  url.searchParams.set("customUrl", ledgerEndpoint(ledgerRpcPath));
   return url.toString();
+}
+
+/**
+ * Explorer runs in the reviewer's browser, so the custom cluster URL has to be
+ * this deployment's public origin rather than the container-local ledger.
+ */
+function ledgerEndpoint(ledgerRpcPath: string) {
+  if (typeof window === "undefined") return ledgerRpcPath;
+  return new URL(ledgerRpcPath, window.location.origin).toString();
 }

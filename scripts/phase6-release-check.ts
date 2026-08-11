@@ -17,6 +17,7 @@ const requiredArtifacts = [
   "docs/PHASE_6_DEPLOYMENT_REPORT.html",
   "app/api/health/route.ts",
   "app/api/readiness/route.ts",
+  "app/api/ledger/rpc/route.ts",
   "app/.well-known/agent.json/route.ts",
   "public/agent-metadata.json",
 ];

@@ -8,6 +8,7 @@
     "dev": "next dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "ledger:budget": "tsx scripts/ledger-slot-budget-probe.ts",
     "lint": "eslint",
     "phase1:spike": "tsx scripts/phase1-compatibility-spike.ts",
     "phase1:devnet": "tsx scripts/phase1-devnet-proof.ts",

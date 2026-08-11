@@ -38,7 +38,39 @@ flowchart TB
   P -. "lazy read-through" .-> D["Solana devnet RPC"]
   N --> Q["Bounded in-memory rate limits"]
   N --> X["In-memory replay + audit state"]
+  N --> L["/api/ledger/rpc read-only ledger view"]
+  E["Solana Explorer in the reviewer's browser"] --> L
+  L --> P
 ```
+
+## Verifiable ledger endpoint
+
+The judge rail runs on a loopback port inside the container, so an Explorer link
+pointing at it would resolve against the reviewer's own machine and fail. The
+console therefore points Explorer's custom-cluster parameter at
+`/api/ledger/rpc` on the public origin, and that route forwards to the rail.
+
+It is the one deliberately cross-origin route in the application — Solana
+Explorer has to reach it from `https://explorer.solana.com`. The exception is
+kept narrow:
+
+- an explicit read-only method allowlist, so writes, airdrops, simulation, and
+  Surfpool's `surfnet_*` cheat codes can never reach the ledger and no visitor
+  can forge the state the demo claims to prove;
+- full-ledger scans (`getLargestAccounts`, `getProgramAccounts`,
+  `getTokenLargestAccounts`) withheld as well — they are read-only but can stall
+  a single isolated rail, and Explorer issues `getLargestAccounts` while
+  prefetching its own home page;
+- a refused method answered the way a validator answers an unsupported one —
+  HTTP 200 with `-32601` against the caller's id — because Explorer probes
+  optional enhanced methods on every account view and only falls back cleanly
+  from that shape;
+- CORS granted only to Solana Explorer and the deployment's own origin, never a
+  wildcard;
+- bounded batch size, body size, per-client quota, in-flight ceiling, and
+  upstream deadline, so the shared rail cannot be stalled from outside;
+- no rail auto-start: the endpoint serves an existing rail or answers 503, so an
+  anonymous request can never trigger a Surfpool boot.
 
 The public grant demo must run as exactly one long-lived Linux x64 container. Serverless functions, Linux arm64, and multiple replicas are rejected by `/api/readiness` because Surfpool 1.4 publishes no Linux arm64 binary, while disposable signers, replay state, and the embedded runtime are process-local. This is a deliberate demo constraint, not a horizontally scalable production claim.
 
@@ -66,6 +98,7 @@ The public grant demo must run as exactly one long-lived Linux x64 container. Se
 | `packages/mainnet-canary`        | fixed mainnet policy, external evidence schema, and report rendering                    |
 | `app/lib/phase3/demo-runtime.ts` | isolated disposable proof rail and activity state                                       |
 | `app/lib/release/config.ts`      | fail-closed hosted-demo and mainnet release policy                                      |
+| `app/lib/ledger/rpc-proxy.ts`    | read-only method, origin, and load policy for the public ledger view                    |
 | `app/lib/security/rate-limit.ts` | bounded public endpoint quotas                                                          |
 | `scripts/phase*-*.ts`            | reproducible phase proofs and release gate                                              |
 | `scripts/mainnet-canary.ts`      | isolated mainnet inspect, canary, verification, and recovery workflow                   |
