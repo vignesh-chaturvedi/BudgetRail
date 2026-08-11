@@ -56,6 +56,21 @@ describe("judge rail slot budget", () => {
       );
     }
   );
+
+  it.each(["1", "4", "99"])(
+    "refuses tick %j, which exhausts the budget before a rail finishes seeding",
+    (value) => {
+      expect(resolveSlotTimeMs(env({ BUDGETRAIL_SLOT_TIME_MS: value }))).toBe(
+        400
+      );
+    }
+  );
+
+  it("accepts the floor itself", () => {
+    expect(resolveSlotTimeMs(env({ BUDGETRAIL_SLOT_TIME_MS: "100" }))).toBe(
+      100
+    );
+  });
 });
 
 describe("judge rail fork endpoint", () => {

@@ -47,9 +47,18 @@ export function resolveBlockProductionMode(
  */
 export const DEFAULT_SLOT_TIME_MS = 400;
 
+/**
+ * A tick this small exhausts the slot budget while the rail is still being
+ * seeded, so the container never reaches a healthy state and the platform
+ * restarts it forever with nothing in the logs to explain why. A mistyped `40`
+ * still leaves a usable rail; a mistyped `4` does not, so refuse the range
+ * instead of shipping a demo that cannot start.
+ */
+export const MIN_SLOT_TIME_MS = 100;
+
 export function resolveSlotTimeMs(env: NodeJS.ProcessEnv = process.env) {
   const configured = Number(env.BUDGETRAIL_SLOT_TIME_MS?.trim());
-  return Number.isFinite(configured) && configured > 0
+  return Number.isFinite(configured) && configured >= MIN_SLOT_TIME_MS
     ? configured
     : DEFAULT_SLOT_TIME_MS;
 }

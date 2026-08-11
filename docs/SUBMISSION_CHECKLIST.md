@@ -5,19 +5,40 @@ Fill the link placeholders only after deploying the pushed Phase 6 commit.
 ## Required links
 
 - [ ] Live HTTPS demo: `PENDING`
-- [x] Public repository: `https://github.com/vignesh-chaturvedi/BudgetRail`
+- [x] Repository: `https://github.com/vignesh-chaturvedi/BudgetRail`
+- [ ] Reviewer access: the repository is private, so `abhwshek@gmail.com` must be granted read access before submitting
 - [ ] 60–90 second demo video: `PENDING`
 - [ ] Colosseum project: `PENDING`
 - [ ] AI subscription receipt / grant proof folder: `PENDING`
 - [ ] Final grant update: `PENDING`
 
-## Evidence signatures
+## Hosted demo evidence
 
-- [ ] Agent Registry registration: `PENDING_PUBLIC_DEVNET_SIGNATURE`
-- [ ] Operational-wallet link: `PENDING_PUBLIC_DEVNET_SIGNATURE`
-- [ ] Successful 0.10 USDC payment: `PENDING_PUBLIC_DEVNET_SIGNATURE`
-- [ ] Owner revocation: `PENDING_PUBLIC_DEVNET_SIGNATURE`
+The hosted judge rail is an isolated Surfpool fork, not public devnet, so these
+signatures do not exist on `explorer.solana.com`'s devnet cluster and must never
+be recorded as if they do. They are verified instead against the deployment's
+own read-only ledger view, which is what every Explorer link in the console
+already points at:
+
+```
+https://explorer.solana.com/tx/<SIGNATURE>?cluster=custom&customUrl=https://YOUR-ORIGIN/api/ledger/rpc
+```
+
+Capture these from one clean run and paste the full Explorer URLs. Open them in
+a fresh tab to confirm they resolve for someone who is not you.
+
+- [ ] Agent Registry registration: `PENDING_LIVE_RUN`
+- [ ] Operational-wallet link: `PENDING_LIVE_RUN`
+- [ ] Successful 0.10 USDC payment: `PENDING_LIVE_RUN`
+- [ ] Owner revocation: `PENDING_LIVE_RUN`
+- [ ] Allowance address renders as a `Fixed Delegation` with its cap, delegatee, and expiry: `PENDING_LIVE_RUN`
 - [ ] Over-budget and post-revoke rejection evidence: link the live activity view/video; denied transactions intentionally have no settlement signature.
+
+A rail is disposable and is replaced by Reset or a container restart, so these
+links are only valid for the life of the rail that produced them. Record them
+from the same run you demonstrate, and re-capture them if the container is
+redeployed before review. The permanent, independently verifiable public-chain
+evidence is the mainnet canary below.
 
 ## Mainnet canary evidence
 
