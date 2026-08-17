@@ -25,21 +25,21 @@ https://explorer.solana.com/tx/<SIGNATURE>?cluster=custom&customUrl=https://YOUR
 Capture these from one clean run and paste the full Explorer URLs. Open them in
 a fresh tab to confirm they resolve for someone who is not you.
 
-Captured from a single clean run on the live deployment, rail `5ejF7Rns…RXATqr`:
+**These signatures are deliberately not pinned here.** A rail is disposable: any
+container restart, redeploy, or press of `Reset demo` replaces it, and the
+previous signatures stop resolving. Pinning them would leave dead links in a
+public repository within hours. Generate live ones instead — the five-step flow
+takes under a minute and produces a fresh, verifiable set every time.
 
-- [x] Agent Registry registration: [`2xBbJPiQ…m3FEDDwj`](https://explorer.solana.com/tx/2xBbJPiQW6MmYBSLdUQ6huxib8ha3z49sy1AVjWK4W36ayKQGDqchJ78uZNh4SCfX1iqEgkrJPp8zfnVm3FEDDwj?cluster=custom&customUrl=https%3A%2F%2Fbudgetrail.onrender.com%2Fapi%2Fledger%2Frpc)
-- [x] Operational-wallet link: [`7Y2SgiPb…VBSaZfGN`](https://explorer.solana.com/tx/7Y2SgiPbWdLEgZfZpVsEBrmuWtzSpiMjh87rvYFirahdvqDGKjn3tbYhmLNrqzhka1Vkjx1t6znaLHfVBSaZfGN?cluster=custom&customUrl=https%3A%2F%2Fbudgetrail.onrender.com%2Fapi%2Fledger%2Frpc)
-- [x] Successful 0.10 USDC payment: [`tRzT6dde…gj6xjRen`](https://explorer.solana.com/tx/tRzT6ddewNsDNMWV2uYTJrv2Cai61TgMQM8dHoHuYzUpfahJjzsE2BqXWa6FKdeYmvnwDJ9VpF7UpGxgj6xjRen?cluster=custom&customUrl=https%3A%2F%2Fbudgetrail.onrender.com%2Fapi%2Fledger%2Frpc)
-- [x] Owner revocation: [`2cqouSJc…Ewp3vHTN`](https://explorer.solana.com/tx/2cqouSJcCsMXFVJt3e37Fq5acWWHAoAaWxaAX1MNJfenCc5BhyHLKnv38J8QhaKvKXTqoCmNsdArJ9JvEwp3vHTN?cluster=custom&customUrl=https%3A%2F%2Fbudgetrail.onrender.com%2Fapi%2Fledger%2Frpc)
-- [x] Budget arithmetic: cap `2.000000`, spent `0.100000`, remaining `1.900000` — the over-budget attempt left it unchanged.
-- [x] Over-budget and post-revoke rejection evidence: both recorded as `denied` in the live activity view. The post-revoke attempt reports _“The delegation is closed; agent payment authority is no longer available.”_ Denied transactions intentionally have no settlement signature.
-- [x] Allowance account reads as closed after revocation, confirming the authority was removed on-chain rather than disabled in the app.
+Verified end to end on the live deployment, one clean run:
 
-A rail is disposable and is replaced by Reset or a container restart, so these
-links are only valid for the life of the rail that produced them. Record them
-from the same run you demonstrate, and re-capture them if the container is
-redeployed before review. The permanent, independently verifiable public-chain
-evidence is the mainnet canary below.
+- [x] Agent Registry registration, operational-wallet link, 0.10 USDC settlement, and owner revocation each produced a signature that resolved through `/api/ledger/rpc` and decoded as Subscriptions, Agent Registry, and Compute Budget instructions
+- [x] Budget arithmetic: cap `2.000000`, spent `0.100000`, remaining `1.900000` — the over-budget attempt left it unchanged
+- [x] Over-budget and post-revoke attempts both recorded as `denied` in the live activity view. The post-revoke attempt reports _“The delegation is closed; agent payment authority is no longer available.”_ Denied transactions intentionally have no settlement signature
+- [x] The allowance account reads as **closed** after revocation, confirming authority was removed on-chain rather than disabled in the application
+
+The permanent, independently verifiable public-chain evidence is the mainnet
+canary below. Those transactions are on `mainnet-beta` and resolve forever.
 
 ## Mainnet canary evidence
 
