@@ -143,7 +143,7 @@ done
    fresh tab: Explorer caches a failed custom cluster for the life of the tab,
    so a reload after any rail outage keeps showing `Loading`.
 7. Confirm security headers, mobile layout, agent card URLs, and no browser-console errors.
-8. Paste the live URL, video, Colosseum link, receipt, and public transaction signatures into `docs/SUBMISSION_CHECKLIST.md`.
+8. Paste the live URL, Colosseum link, receipt, and evidence signatures into `docs/SUBMISSION_CHECKLIST.md`.
 
 ## Rollback
 

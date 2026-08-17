@@ -34,7 +34,7 @@ Expected headline output:
 }
 ```
 
-The checker validates the repository remote, required public artifacts, hosted-demo configuration, one-replica constraint, and the mainnet tripwire. It intentionally reports public deployment, clean-browser verification, video, and final evidence links as external gates.
+The checker validates the repository remote, required public artifacts, hosted-demo configuration, one-replica constraint, and the mainnet tripwire. It intentionally reports public deployment, clean-browser verification, and final evidence links as external gates.
 
 ## Security decision
 
@@ -56,7 +56,7 @@ The image measures **412 MB** on disk (10 layers, `amd64`/`linux`). An earlier r
 
 The exact image also passed the five-step local judge flow: Identity → Pay 0.10 USDC → reject 3.00 USDC → Revoke → reject the next payment. The standalone adversarial proof still performs a fresh post-payment native program simulation, while the judge runtime prepares the same native over-budget denial at rail creation so the interactive proof is deterministic across translated and native x64 hosts. Responsive checks at 375 px, 768 px, and 1280 px had no horizontal overflow, and browser logs contained no warnings or errors.
 
-The results are summarized visually in [`PHASE_6_DEPLOYMENT_REPORT.html`](./PHASE_6_DEPLOYMENT_REPORT.html). The public URL, public-host clean-browser rerun, hosted-demo evidence links, video, and Colosseum links remain in [`SUBMISSION_CHECKLIST.md`](./SUBMISSION_CHECKLIST.md) until the pushed commit is deployed. Those evidence links resolve against the deployment's own read-only ledger view rather than public devnet, because the judge rail is an isolated Surfpool fork.
+The results are summarized visually in [`PHASE_6_DEPLOYMENT_REPORT.html`](./PHASE_6_DEPLOYMENT_REPORT.html). The public URL, public-host clean-browser rerun, hosted-demo evidence links, and Colosseum link remain in [`SUBMISSION_CHECKLIST.md`](./SUBMISSION_CHECKLIST.md) until the pushed commit is deployed. Those evidence links resolve against the deployment's own read-only ledger view rather than public devnet, because the judge rail is an isolated Surfpool fork.
 
 ## Container rehearsal
 

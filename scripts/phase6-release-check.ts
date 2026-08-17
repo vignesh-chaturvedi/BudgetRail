@@ -65,7 +65,6 @@ console.log(
       externalGates: [
         "deploy the container to a public HTTPS origin",
         "verify the clean-browser judge flow against that origin",
-        "record and publish the 60-90 second demo",
         "add final live, Colosseum, receipt, and transaction links",
       ],
     },

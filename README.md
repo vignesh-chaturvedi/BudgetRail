@@ -20,6 +20,46 @@ Solana — built on the native Subscriptions Program, with no custom onchain cod
 
 BudgetRail gives autonomous agents capped, expiring, and instantly revocable token-spending authority for x402 payments on Solana.
 
+## Try it
+
+### 1. Hosted, nothing to install — about a minute
+
+Open **[budgetrail.onrender.com](https://budgetrail.onrender.com)** and scroll past the wallet card to the judge console. No wallet, no login, no setup.
+
+| Click                           | What it proves                                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `Run 0.10 USDC task`            | The agent gets an HTTP 402, checks price against policy, signs, and settles. Budget drops 2.00 → 1.90.          |
+| `Prove 3.00 denial`             | Policy rejects it before signing, and Solana's program simulation rejects it independently. Balances unchanged. |
+| `Revoke now` → `Confirm revoke` | The owner closes the delegation account on-chain.                                                               |
+| `Prove post-revoke denial`      | The next payment fails closed — the authority is gone from the chain, not disabled in the app.                  |
+| Any `↗` in Verifiable activity  | Opens that signature in Solana Explorer.                                                                        |
+
+`Reset demo` seeds a fresh rail at any time.
+
+The hosted rail is an isolated Surfpool fork of devnet, so its signatures resolve
+through this deployment's own read-only ledger at `/api/ledger/rpc` rather than
+public devnet. **Open Explorer links in a fresh tab** — Explorer caches a failed
+custom cluster for the life of a tab.
+
+### 2. Your own rail on public devnet
+
+Connect a devnet wallet holding devnet USDC ([Circle's faucet](https://faucet.circle.com/)) at the top of the page, then create, inspect, and revoke a real allowance against Solana's native Subscriptions Program. Your wallet signs every transaction; BudgetRail never receives a key.
+
+### 3. From a clean clone
+
+Requires Node 22.13+ and Corepack.
+
+```bash
+corepack enable pnpm
+pnpm install
+pnpm test          # unit and Surfpool smoke tests
+pnpm phase5:local  # valid, over-budget, expired, and revoked invariants
+pnpm dev           # the same console on http://localhost:3000
+```
+
+Every `phase*:local` command starts and stops its own isolated Surfpool network
+and needs no faucet, key, or funded wallet.
+
 ## Build status
 
 **Phases 1–7 are complete. The fixed-value mainnet canary passed and was fully swept without enabling mainnet writes in the hosted app.**
@@ -28,7 +68,7 @@ The repository now contains an owner control plane for native fixed USDC delegat
 
 The codebase includes a portable long-running Node container, fail-closed release readiness, public endpoint quotas, dynamic agent metadata, a deployment/demo/submission kit, and a separate local mainnet-canary harness.
 
-The demo is live at **[budgetrail.onrender.com](https://budgetrail.onrender.com)**, where the full Identity → Pay → Challenge cap → Revoke → Prove loop runs with no wallet, login, or local setup. Every signature it produces is verifiable in Solana Explorer against the deployment's own read-only ledger view. The recorded video and the final evidence links remain outstanding.
+The demo is live at **[budgetrail.onrender.com](https://budgetrail.onrender.com)**, where the full Identity → Pay → Challenge cap → Revoke → Prove loop runs with no wallet, login, or local setup. Every signature it produces is verifiable in Solana Explorer against the deployment's own read-only ledger view.
 
 Mainnet writes remain intentionally locked in the hosted application. The only mainnet write path is the local Phase 7 CLI: it pins canonical USDC and the native Subscriptions Program, enforces an exact 0.20 USDC exposure, requires a private RPC and explicit acknowledgement, records finalized evidence, revokes authority, and sweeps every disposable balance.
 

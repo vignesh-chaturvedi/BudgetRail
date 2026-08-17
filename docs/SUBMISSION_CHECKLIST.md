@@ -7,7 +7,6 @@ Fill the link placeholders only after deploying the pushed Phase 6 commit.
 - [ ] Live HTTPS demo: `PENDING`
 - [x] Repository: `https://github.com/vignesh-chaturvedi/BudgetRail`
 - [ ] Reviewer access: the repository is private, so `abhwshek@gmail.com` must be granted read access before submitting
-- [ ] 60–90 second demo video: `PENDING`
 - [ ] Colosseum project: `PENDING`
 - [ ] AI subscription receipt / grant proof folder: `PENDING`
 - [ ] Final grant update: `PENDING`
@@ -32,7 +31,7 @@ a fresh tab to confirm they resolve for someone who is not you.
 - [ ] Successful 0.10 USDC payment: `PENDING_LIVE_RUN`
 - [ ] Owner revocation: `PENDING_LIVE_RUN`
 - [ ] Allowance address renders as a `Fixed Delegation` with its cap, delegatee, and expiry: `PENDING_LIVE_RUN`
-- [ ] Over-budget and post-revoke rejection evidence: link the live activity view/video; denied transactions intentionally have no settlement signature.
+- [ ] Over-budget and post-revoke rejection evidence: link the live activity view; denied transactions intentionally have no settlement signature.
 
 A rail is disposable and is replaced by Reset or a container restart, so these
 links are only valid for the life of the rail that produced them. Record them
