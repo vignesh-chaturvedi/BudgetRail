@@ -25,12 +25,15 @@ https://explorer.solana.com/tx/<SIGNATURE>?cluster=custom&customUrl=https://YOUR
 Capture these from one clean run and paste the full Explorer URLs. Open them in
 a fresh tab to confirm they resolve for someone who is not you.
 
-- [ ] Agent Registry registration: `PENDING_LIVE_RUN`
-- [ ] Operational-wallet link: `PENDING_LIVE_RUN`
-- [ ] Successful 0.10 USDC payment: `PENDING_LIVE_RUN`
-- [ ] Owner revocation: `PENDING_LIVE_RUN`
-- [ ] Allowance address renders as a `Fixed Delegation` with its cap, delegatee, and expiry: `PENDING_LIVE_RUN`
-- [ ] Over-budget and post-revoke rejection evidence: link the live activity view; denied transactions intentionally have no settlement signature.
+Captured from a single clean run on the live deployment, rail `5ejF7Rns…RXATqr`:
+
+- [x] Agent Registry registration: [`2xBbJPiQ…m3FEDDwj`](https://explorer.solana.com/tx/2xBbJPiQW6MmYBSLdUQ6huxib8ha3z49sy1AVjWK4W36ayKQGDqchJ78uZNh4SCfX1iqEgkrJPp8zfnVm3FEDDwj?cluster=custom&customUrl=https%3A%2F%2Fbudgetrail.onrender.com%2Fapi%2Fledger%2Frpc)
+- [x] Operational-wallet link: [`7Y2SgiPb…VBSaZfGN`](https://explorer.solana.com/tx/7Y2SgiPbWdLEgZfZpVsEBrmuWtzSpiMjh87rvYFirahdvqDGKjn3tbYhmLNrqzhka1Vkjx1t6znaLHfVBSaZfGN?cluster=custom&customUrl=https%3A%2F%2Fbudgetrail.onrender.com%2Fapi%2Fledger%2Frpc)
+- [x] Successful 0.10 USDC payment: [`tRzT6dde…gj6xjRen`](https://explorer.solana.com/tx/tRzT6ddewNsDNMWV2uYTJrv2Cai61TgMQM8dHoHuYzUpfahJjzsE2BqXWa6FKdeYmvnwDJ9VpF7UpGxgj6xjRen?cluster=custom&customUrl=https%3A%2F%2Fbudgetrail.onrender.com%2Fapi%2Fledger%2Frpc)
+- [x] Owner revocation: [`2cqouSJc…Ewp3vHTN`](https://explorer.solana.com/tx/2cqouSJcCsMXFVJt3e37Fq5acWWHAoAaWxaAX1MNJfenCc5BhyHLKnv38J8QhaKvKXTqoCmNsdArJ9JvEwp3vHTN?cluster=custom&customUrl=https%3A%2F%2Fbudgetrail.onrender.com%2Fapi%2Fledger%2Frpc)
+- [x] Budget arithmetic: cap `2.000000`, spent `0.100000`, remaining `1.900000` — the over-budget attempt left it unchanged.
+- [x] Over-budget and post-revoke rejection evidence: both recorded as `denied` in the live activity view. The post-revoke attempt reports _“The delegation is closed; agent payment authority is no longer available.”_ Denied transactions intentionally have no settlement signature.
+- [x] Allowance account reads as closed after revocation, confirming the authority was removed on-chain rather than disabled in the app.
 
 A rail is disposable and is replaced by Reset or a container restart, so these
 links are only valid for the life of the rail that produced them. Record them
@@ -50,16 +53,19 @@ evidence is the mainnet canary below.
 
 ## Clean-browser acceptance
 
-- [ ] `/api/health` returns `200`
-- [ ] `/api/readiness` reports `ready`, `devnet`, and `mainnetWritesLocked: true`
-- [ ] `/.well-known/agent.json` uses the live origin
-- [ ] `GET /api/ledger/rpc` describes the read-only policy; `sendTransaction`, `requestAirdrop`, `surfnet_*`, and `getLargestAccounts` are all refused
-- [ ] Identity → Pay → Challenge cap → Revoke → Prove completes
-- [ ] Explorer/evidence links open without authentication or local files
-- [ ] A signature link decodes in Solana Explorer as a Subscriptions instruction, and the allowance address renders as a `Fixed Delegation` with its cap, delegatee, and expiry (open in a fresh tab)
-- [ ] 375 px, 768 px, and desktop layouts have no overflow
-- [ ] Browser console has no warnings/errors
-- [ ] Repository setup works from a fresh clone
+Verified against `https://budgetrail.onrender.com`.
+
+- [x] `/api/health` returns `200`
+- [x] `/api/readiness` reports `ready`, `grant-demo`, `devnet`, `mainnetWritesLocked: true`, `ledger.status: live`, and all eight controls passing
+- [x] `/.well-known/agent.json` uses the live origin
+- [x] `GET /api/ledger/rpc` describes the read-only policy; `sendTransaction`, `requestAirdrop`, `simulateTransaction`, `surfnet_setAccount`, `surfnet_timeTravel`, `surfnet_resetNetwork`, `getLargestAccounts`, and `getProgramAccounts` are all refused with a validator-shaped `-32601`
+- [x] CORS is granted only to Solana Explorer and this origin; a look-alike origin is refused `403`, and an oversized batch is refused `400`
+- [x] Identity → Pay → Challenge cap → Revoke → Prove completes
+- [x] Explorer/evidence links open without authentication or local files
+- [x] All four evidence signatures resolve through the public ledger endpoint and decode as Subscriptions, Agent Registry, and Compute Budget instructions
+- [x] 375 px, 768 px, and 1280 px layouts have no horizontal overflow and no elements past the viewport
+- [x] Browser console has no warnings or errors
+- [x] Repository setup works from a fresh public clone: `git clone` → `pnpm install --frozen-lockfile` → `pnpm typecheck` → `pnpm test` → `pnpm build`, all passing
 
 ## Suggested final update
 
