@@ -4,9 +4,8 @@ Fill the link placeholders only after deploying the pushed Phase 6 commit.
 
 ## Required links
 
-- [ ] Live HTTPS demo: `PENDING`
-- [x] Repository: `https://github.com/vignesh-chaturvedi/BudgetRail`
-- [ ] Reviewer access: the repository is private, so `abhwshek@gmail.com` must be granted read access before submitting
+- [x] Live HTTPS demo: `https://budgetrail.onrender.com`
+- [x] Public repository: `https://github.com/vignesh-chaturvedi/BudgetRail` — MIT, open source, so no reviewer access grant is required
 - [ ] Colosseum project: `PENDING`
 - [ ] AI subscription receipt / grant proof folder: `PENDING`
 - [ ] Final grant update: `PENDING`
